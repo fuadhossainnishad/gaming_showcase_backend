@@ -1,12 +1,20 @@
-import { Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
+import { USER_ROLE } from './user.constant';
 
-export type TUserSignUp = {
+// First, define your interfaces clearly
+export interface IUser {
   name: string;
   email?: string;
   password: string;
-};
+  role: string;
+  photo?: string;
+  isDeleted?: boolean;
+}
 
-export type TUserSignIn = {
-  email?: string;
-  password: string;
-};
+// Define the static methods interface
+export interface IUserModel extends Model<IUser> {
+  isPasswordMatched(plainTextPassword: string, hashPassword: string): Promise<boolean>;
+  isJWTIssuesBeforePasswordChange(passwordChangeTimestamp: Date, jwtIssuesTime: number): Promise<boolean>;
+}
+
+export type TUserRole = keyof typeof USER_ROLE;

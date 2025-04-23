@@ -1,109 +1,57 @@
 import { z } from 'zod';
+import { gameCategory } from './game.constant';
 
-export const GAME_CATEGORIES = [
-  'Action',
-  'Adventure',
-  'RPG',
-  'Strategy',
-  'Simulation',
-  'Puzzle',
-  'Sports',
-  'Racing',
-  'Shooter',
-  'Other',
-] as const;
-
-const gameUploadValidationSchema = z.object({
+const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+const GameSchema = z.object({
   body: z.object({
     game_title: z
-      .string({ required_error: 'Game title is required' })
-      .min(1, 'Game title is required'),
-    category: z.enum(GAME_CATEGORIES as [string, ...string[]], {
-      required_error: 'Category is required',
-      invalid_type_error: `Category must be one of: ${GAME_CATEGORIES.join(', ')}`,
+      .string()
+      .min(1, { message: 'Game title is required' })
+      .max(100, { message: 'Game title cannot exceed 100 characters' }),
+
+    category: z.enum(gameCategory as [string, ...string[]], {
+      message: `Category must be one of: ${gameCategory.join(', ')}`,
     }),
+
     description: z
-      .string({ required_error: 'Description is required' })
-      .min(1, 'Description is required'),
+      .string()
+      .min(10, { message: 'Description must be at least 10 characters' })
+      .max(2000, { message: 'Description cannot exceed 2000 characters' }),
+
     steam_link: z
-      .string({ required_error: 'Steam link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
+      .string()
+      .url({ message: 'Must be a valid Steam URL' })
+      .regex(urlPattern, { message: 'Invalid Steam URL format' }),
+
     x_link: z
-      .string({ required_error: 'X link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
+      .string()
+      .url({ message: 'Must be a valid X URL' })
+      .regex(urlPattern, { message: 'Invalid X URL format' }),
+
     linkedin_link: z
-      .string({ required_error: 'LinkedIn link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
+      .string()
+      .url({ message: 'Must be a valid LinkedIn URL' })
+      .regex(urlPattern, { message: 'Invalid LinkedIn URL format' }),
+
     reddit_link: z
-      .string({ required_error: 'Reddit link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
+      .string()
+      .url({ message: 'Must be a valid Reddit URL' })
+      .regex(urlPattern, { message: 'Invalid Reddit URL format' }),
+
     instagram_link: z
-      .string({ required_error: 'Instagram link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
+      .string()
+      .url({ message: 'Must be a valid Instagram URL' })
+      .regex(urlPattern, { message: 'Invalid Instagram URL format' }),
+
     media_files: z
-      .array(z.string(), { required_error: 'Media files are optional' })
+      .array(z.string().url({ message: 'Each media file must be a valid URL' }))
+      .min(1, { message: 'At least one media file is required' })
       .optional(),
   }),
 });
 
-const gameUpdateValidationSchema = z.object({
-  body: z.object({
-    game_title: z
-      .string({ required_error: 'Game title is required' })
-      .min(1, 'Game title is required')
-      .optional(),
-    category: z
-      .enum(GAME_CATEGORIES as [string, ...string[]], {
-        required_error: 'Category is required',
-        invalid_type_error: `Category must be one of: ${GAME_CATEGORIES.join(', ')}`,
-      })
-      .optional(),
-    description: z
-      .string({ required_error: 'Description is required' })
-      .min(1, 'Description is required')
-      .optional(),
-    steam_link: z
-      .string({ required_error: 'Steam link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
-    x_link: z
-      .string({ required_error: 'X link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
-    linkedin_link: z
-      .string({ required_error: 'LinkedIn link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
-    reddit_link: z
-      .string({ required_error: 'Reddit link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
-    instagram_link: z
-      .string({ required_error: 'Instagram link is optional' })
-      .url('Invalid URL format')
-      .optional()
-      .or(z.literal('')),
-    media_files: z
-      .array(z.string(), { required_error: 'Media files are optional' })
-      .optional(),
-  }),
-});
-
-export const GameValidation = {
-  gameUploadValidationSchema,
-  gameUpdateValidationSchema,
+const GameValidationSchema = {
+  GameSchema,
 };
+
+export default GameValidationSchema;

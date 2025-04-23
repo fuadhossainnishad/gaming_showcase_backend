@@ -1,11 +1,13 @@
 import express from 'express';
 
 import { UserRouter } from '../module/user/user.routes';
-import { GameRouter } from '../module/game/game.routes';
+import GameRouter from '../module/game/game.routes';
+import AuthRouter from '../module/auth/auth.routes';
 
 const router = express.Router();
 const moduleRoutes = [
   { path: '/user', route: UserRouter },
+  { path: '/auth', route: AuthRouter },
   { path: '/game', route: GameRouter },
 ];
 

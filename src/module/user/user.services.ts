@@ -1,10 +1,11 @@
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
-import { TUserSignUp } from './user.interface';
+
 import User from './user.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
+import { IUser } from './user.interface';
 
-const createUserIntoDb = async (payload: TUserSignUp) => {
+const createUserIntoDb = async (payload:  IUser) => {
   try {
     const createUserBuilder = new User(payload);
     const result = await createUserBuilder.save();
@@ -12,7 +13,7 @@ const createUserIntoDb = async (payload: TUserSignUp) => {
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
-      ' createUserIntoDb server unavilable',
+      ' createUserIntoDb server unavailable',
       '',
     );
   }
@@ -38,7 +39,7 @@ const findAllUserIntoDb = async (query: Record<string, unknown>) => {
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
-      '  findAllUserIntoDb server unavilable',
+      'findAllUserIntoDb server unavailable',
       '',
     );
   }

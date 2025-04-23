@@ -1,9 +1,10 @@
-import { Model, Schema, Types, model } from 'mongoose';
-import { TUserSignUp } from './user.interface';
+import { Model, Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
 import config from '../../app/config';
+import { USER_ROLE } from './user.constant';
+import { IUser, IUserModel } from './user.interface';
 
-const TUserSchema: Schema = new Schema(
+const userSchema = new Schema<IUser, IUserModel>(
   {
     name: {
       type: String,
@@ -17,13 +18,28 @@ const TUserSchema: Schema = new Schema(
       type: String,
       required: [true, 'password is Required'],
     },
+    role: {
+      type: String,
+      enum: [USER_ROLE.ADMIN, USER_ROLE.USER],
+      default: USER_ROLE.USER
+    },
+    photo: {
+      type: String,
+      required: [false, 'photo is not require'],
+      default: null,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-TUserSchema.set('toJSON', {
+// Middleware and methods stay the same
+userSchema.set('toJSON', {
   virtuals: true,
   transform: function (doc, ret) {
     delete ret.password;
@@ -31,26 +47,51 @@ TUserSchema.set('toJSON', {
   },
 });
 
-// mongoose middlewere 
-TUserSchema.pre('save',async function(next){
-
-  // eslint-disable-next-line @typescript-eslint/no-this-alias
-  const user=this;
-  user.password=await bcrypt.hash(user.password as string,Number(config.bcrypt_salt_rounds as string));
-
-  next();
-
-
-});
-//post save middleware hook
-TUserSchema.post('save',function(doc,next){
-  doc.password='';
-  // after the save the password is empy becouse of security issues
+userSchema.pre('save', async function (next) {
+  const user = this;
+  user.password = await bcrypt.hash(
+    user.password,
+    Number(config.bcrypt_salt_rounds as string),
+  );
   next();
 });
 
+userSchema.post('save', function (doc, next) {
+  doc.password = '';
+  next();
+});
 
+userSchema.pre('find', function (next) {
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
 
+userSchema.pre('aggregate', function (next) {
+  this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } });
+  next();
+});
 
-const User: Model<TUserSignUp> = model<TUserSignUp>('User', TUserSchema);
+userSchema.pre('findOne', function (next) {
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+
+// Static methods implementation
+userSchema.statics.isPasswordMatched = async function (
+  plainTextPassword: string,
+  hashPassword: string,
+): Promise<boolean> {
+  return await bcrypt.compare(plainTextPassword, hashPassword);
+};
+
+userSchema.statics.isJWTIssuesBeforePasswordChange = async function (
+  passwordChangeTimestamp: Date,
+  jwtIssuesTime: number,
+): Promise<boolean> {
+  const passwordChangeTime = new Date(passwordChangeTimestamp).getTime() / 1000;
+  return passwordChangeTime > jwtIssuesTime;
+};
+
+// Create and export the model with correct typing
+const User = model<IUser, IUserModel>('User', userSchema);
 export default User;

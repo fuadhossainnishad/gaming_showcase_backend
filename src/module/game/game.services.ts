@@ -1,74 +1,40 @@
+import { Request } from 'express';
 import httpStatus from 'http-status';
-
-import { gameInterface } from './game.interface';
-import { Game } from './game.model';
 import AppError from '../../app/error/AppError';
+import games from './game.model';
 
-const uploadGameService = async (payload: gameInterface) => {
-  const buildInShoes = new Game(payload);
-  const result = await buildInShoes.save();
-  return result;
-};
+// Create a type for your request with files
+interface RequestWithFiles extends Request {
+  files: Express.Multer.File[];
+}
 
-const AllContractIntoDb = async () => {
-  const result = await Game.find({}).sort({ isfavorite: -1 });
-  return result;
-};
+const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      throw new AppError(httpStatus.NOT_FOUND, 'file is not uploaded', '');
+    }
 
-const SpecificContractIdIntoDb = async (id: string) => {
-  const result = await Game.findById(id);
-  return result;
-};
+    if (!req.body) {
+      throw new AppError(httpStatus.NOT_FOUND, 'body data is not uploaded', '');
+    }
 
-const UpdateContractFromDb = async (
-  id: string,
-  payload: Partial<gameInterface>,
-) => {
-  const isExistUser = await Game.findById(id);
-  if (!isExistUser) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User Not Exist in System', '');
-  }
-  const result = await Game.findByIdAndUpdate(id, payload, {
-    new: true,
-    runValidators: true,
-  });
-  return result;
-};
-const DeleteContractFromDb = async (id: string) => {
-  const isExistUser = await Game.findById(id);
-  if (!isExistUser) {
+    const media_files = req.files.map((file) => file.path);
+    const data = req.body;
+
+    const gameBuilder = new games({ ...data, media_files, userId });
+    const result = await gameBuilder.save();
+    return result && { status: true, message: ' succesasfuyllyu uplode files' };
+  } catch (error: any) {
     throw new AppError(
-      httpStatus.NOT_FOUND,
-      'User Not Exist in the System',
+      httpStatus.SERVICE_UNAVAILABLE,
+      'create vnew game  server is unableable',
       '',
     );
   }
-
-  const result = await Game.updateOne({ _id: id }, { isDelete: true });
-  return result;
 };
 
-const FavoriteContrcatFromDb = async (id: string) => {
-  const isExistUser = await Game.findById(id);
-  if (!isExistUser) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      'User Not Exist in the System',
-      '',
-    );
-  }
-  const result = await Game.updateOne(
-    { _id: id },
-    { isfavorite: isExistUser?.isfavorite ? false : true },
-  );
-  return result;
+const GameServices = {
+  createNewGameIntoDb,
 };
 
-export const ContractService = {
-  uploadGameService,
-  AllContractIntoDb,
-  SpecificContractIdIntoDb,
-  UpdateContractFromDb,
-  DeleteContractFromDb,
-  FavoriteContrcatFromDb,
-};
+export default GameServices;
