@@ -27,7 +27,7 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
-      'create vnew game  server is unableable',
+      'create new game server is unavailable',
       '',
     );
   }
