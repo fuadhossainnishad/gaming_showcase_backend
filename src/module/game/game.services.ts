@@ -2,8 +2,8 @@ import { Request } from 'express';
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import games from './game.model';
+import QueryBuilder from '../../app/builder/QueryBuilder';
 
-// Create a type for your request with files
 interface RequestWithFiles extends Request {
   files: Express.Multer.File[];
 }
@@ -23,7 +23,7 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
 
     const gameBuilder = new games({ ...data, media_files, userId });
     const result = await gameBuilder.save();
-    return result && { status: true, message: ' succesasfuyllyu uplode files' };
+    return result && { status: true, message: ' successfully upload files' };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
@@ -33,8 +33,30 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   }
 };
 
+const getAllGameIntoDb = async (query: Record<string, unknown>) => {
+  try {
+    const gameQuery = new QueryBuilder(games.find().populate('userId'), query)
+      .search(['game_title', 'description'])
+      .filter()
+      .sort()
+      .pagination()
+      .fields();
+
+    const allGames = await gameQuery.modelQuery;
+    const meta = await gameQuery.countTotal();
+
+    return { meta, allGames };
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to retrieve games',
+      '',
+    );
+  }
+};
 const GameServices = {
   createNewGameIntoDb,
+  getAllGameIntoDb
 };
 
 export default GameServices;

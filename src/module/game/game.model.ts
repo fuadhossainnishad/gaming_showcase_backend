@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { CreateGameModel, GameInterface } from './game.interface';
 import { gameCategory } from './game.constant';
+import { boolean } from 'zod';
 
 // Schema definition
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
@@ -47,6 +48,10 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       type: [String],
       required: true,
     },
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
     isDelete: {
       type: Boolean,
       default: false,
@@ -57,9 +62,9 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
   },
 );
 
-// middlewere
+// middleware
 GameSchema.pre('find', function (next) {
-  this.find({ isDelete: { $ne: true } });
+  this.where({ isDelete: { $ne: true } });
   next();
 });
 GameSchema.pre('aggregate', function (next) {
@@ -82,7 +87,7 @@ GameSchema.statics.isExistGame = async function (
 };
 
 const games = mongoose.model<GameInterface, CreateGameModel>(
-  'games',
+  'Games',
   GameSchema,
 );
 

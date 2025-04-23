@@ -47,6 +47,7 @@ const GameSchema = z.object({
       .array(z.string().url({ message: 'Each media file must be a valid URL' }))
       .min(1, { message: 'At least one media file is required' })
       .optional(),
+    isApproved: z.boolean().default(false),
   }),
 });
 

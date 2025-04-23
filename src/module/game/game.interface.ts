@@ -20,6 +20,7 @@ export interface GameInterface {
   reddit_link: string;
   instagram_link: string;
   media_files: string[];
+  isApproved: boolean;
   isDelete?: boolean;
 }
 

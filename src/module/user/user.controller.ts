@@ -14,23 +14,30 @@ const createUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
-
-const  findAllUser:RequestHandler=catchAsync(async(req , res)=>{
-
-  const result=await UserServices.findAllUserIntoDb(req.query);
+const findAllUser: RequestHandler = catchAsync(async (req, res) => {
+  const result = await UserServices.findAllUserIntoDb(req.query);
   sendRespone(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'successfully find all user',
     data: result,
   });
+});
 
+const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
+  const result = await UserServices.updateUserProfileIntoDb(req.body);
+  sendRespone(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'successfully updated user profile',
+    data: result,
+  });
 });
 
 const UserController = {
   createUser,
-
-  findAllUser
+  findAllUser,
+  updateProfileUser,
 };
 
 export default UserController;

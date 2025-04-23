@@ -31,7 +31,43 @@ const userSignInValidation = z.object({
   }),
 });
 
+const userProfileUpdateValidation = z.object({
+  body: z.object({
+    name: z
+      .string({ required_error: 'Name is required' })
+      .min(1, 'Name is required')
+      .optional(),
+    userId: z.string({ required_error: 'UserId is required' }).optional(),
+    role: z
+      .enum([USER_ROLE.ADMIN, USER_ROLE.USER])
+      .default(USER_ROLE.USER)
+      .optional(),
+    bio: z.string().optional(),
+    links: z
+      .array(z.string().url('Each link must be valid url'))
+      .optional()
+      .default([])
+      .refine(
+        (links) => {
+          links.length <= 5;
+        },
+        {
+          message: 'Maximum 5 links are allowed',
+        },
+      )
+      .refine(
+        (links) => {
+          new Set(links).size === links.length;
+        },
+        {
+          message: 'Links must be unique',
+        },
+      ),
+  }),
+});
+
 export const userValidation = {
   userSignUpValidation,
   userSignInValidation,
+  userProfileUpdateValidation,
 };

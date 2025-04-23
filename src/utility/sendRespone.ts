@@ -7,10 +7,10 @@ type TResponeData<T> = {
   data: T;
 };
 
-const sendRespone = <T>(res: Response, data: TResponeData<T>) => {
+const sendResponse = <T>(res: Response, data: TResponeData<T>) => {
   res
     .status(data.statusCode)
     .send({ success: data.success, message: data.message, data: data.data });
 };
 
-export default sendRespone;
+export default sendResponse;

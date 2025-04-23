@@ -4,11 +4,18 @@ import config from '../../app/config';
 import { USER_ROLE } from './user.constant';
 import { IUser, IUserModel } from './user.interface';
 
+const linksRegex = /^https?:\/\/[^\s$.?#].[^\s]*$/;
+
 const userSchema = new Schema<IUser, IUserModel>(
   {
+    userId: {
+      type: String,
+      required: [true, 'User ID is required'],
+      unique: true,
+    },
     name: {
       type: String,
-      required: [true, 'name is Required'],
+      required: [false, 'name is Required'],
     },
     email: {
       type: String,
@@ -16,17 +23,37 @@ const userSchema = new Schema<IUser, IUserModel>(
     },
     password: {
       type: String,
-      required: [true, 'password is Required'],
+      required: [false, 'password is Required'],
+      select: false,
     },
     role: {
       type: String,
       enum: [USER_ROLE.ADMIN, USER_ROLE.USER],
-      default: USER_ROLE.USER
+      default: USER_ROLE.USER,
+    },
+    bio: {
+      type: String,
+      required: [false, 'Bio is not require'],
+    },
+    links: {
+      type: [String],
+      required: [false, 'Links are not required'],
+      default: [],
+      validate: {
+        validator: (links: string[]) =>
+          links.every((link) => linksRegex.test(link)),
+        message: 'Each link must be a valid URL',
+      },
     },
     photo: {
       type: String,
       required: [false, 'photo is not require'],
       default: null,
+    },
+    uploadedGame: {
+      type: [String],
+      required: [false, 'photo is not require'],
+      default: [],
     },
     isDeleted: {
       type: Boolean,

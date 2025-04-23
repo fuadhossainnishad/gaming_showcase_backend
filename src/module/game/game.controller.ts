@@ -1,8 +1,8 @@
 import { RequestHandler } from 'express';
 import catchAsync from '../../utility/catchAsync';
 import GameServices from './game.services';
-import sendRespone from '../../utility/sendRespone';
 import httpStatus from 'http-status';
+import sendResponse from '../../utility/sendRespone';
 
 const createNewGame: RequestHandler = catchAsync(async (req, res) => {
   const result = await GameServices.createNewGameIntoDb(
@@ -10,7 +10,7 @@ const createNewGame: RequestHandler = catchAsync(async (req, res) => {
     req.user.id,
   );
 
-  sendRespone(res, {
+  sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
     message: 'successfully created game',
@@ -18,12 +18,20 @@ const createNewGame: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getAllGame: RequestHandler = catchAsync(async (req, res) => {
+  const result = await GameServices.getAllGameIntoDb(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully retrieved all games',
+    data: result,
+  });
+});
+
 const GameController = {
   createNewGame,
+  getAllGame,
 };
 
 export default GameController;
-
-const getAllGame: RequestHandler = catchAsync(async (req, res) => {
-  const result = await GameController.getAllGame();
-});
