@@ -1,5 +1,14 @@
 import { Model, Types } from 'mongoose';
 
+export interface CommentsInterface {
+  userId: Types.ObjectId;
+  comment: string;
+}
+
+export interface ShareInterface {
+  userId: Types.ObjectId;
+}
+
 export interface GameInterface {
   userId: Types.ObjectId;
   game_title: string;
@@ -20,6 +29,10 @@ export interface GameInterface {
   reddit_link: string;
   instagram_link: string;
   media_files: string[];
+  comments: CommentsInterface[];
+  totalComments: number;
+  shares: ShareInterface[];
+  totalShare: number;
   isApproved: boolean;
   isDelete?: boolean;
 }

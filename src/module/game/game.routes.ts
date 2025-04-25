@@ -37,6 +37,40 @@ router.post(
   GameController.createNewGame,
 );
 
+router.post(
+  '/comment',
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  validationRequest(GameValidationSchema.CommentSchema),
+  GameController.addComment,
+);
+
+router.post(
+  '/share',
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  validationRequest(GameValidationSchema.ShareSchema),
+  GameController.addShare,
+);
+
+router.get(
+  '/getAllGame',
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  GameController.getAllGame,
+);
+
+router.get(
+  '/top-game/day',
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  validationRequest(GameValidationSchema.TopGameQuerySchema),
+  GameController.getTopGameOfDay,
+);
+
+router.get(
+  '/top-game/week',
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  validationRequest(GameValidationSchema.TopGameQuerySchema),
+  GameController.getTopGameOfWeek,
+);
+
 const GameRouter = router;
 
 export default GameRouter;

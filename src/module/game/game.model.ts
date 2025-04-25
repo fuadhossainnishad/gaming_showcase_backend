@@ -1,9 +1,8 @@
 import mongoose, { Schema } from 'mongoose';
 import { CreateGameModel, GameInterface } from './game.interface';
 import { gameCategory } from './game.constant';
-import { boolean } from 'zod';
+import { boolean, number } from 'zod';
 
-// Schema definition
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
   {
     userId: {
@@ -47,6 +46,42 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
     media_files: {
       type: [String],
       required: true,
+    },
+    comments: {
+      type: [
+        {
+          userId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+          },
+          comment: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+      default: [],
+    },
+    totalComments: {
+      type: Number,
+      default: 0,
+    },
+    shares: {
+      type: [
+        {
+          userId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+          },
+        },
+      ],
+      default: [],
+    },
+    totalShare: {
+      type: Number,
+      default: 0,
     },
     isApproved: {
       type: Boolean,

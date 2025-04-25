@@ -3,6 +3,10 @@ import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import games from './game.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
+import User from '../user/user.model';
+import { CommentPayload, SharePayload, TopGameQuery } from './game.type';
+import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
+import { USER_ROLE } from '../user/user.constant';
 
 interface RequestWithFiles extends Request {
   files: Express.Multer.File[];
@@ -33,9 +37,15 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   }
 };
 
-const getAllGameIntoDb = async (query: Record<string, unknown>) => {
+const getAllGameIntoDb = async (query: Record<string, unknown>, role: string) => {
   try {
-    const gameQuery = new QueryBuilder(games.find().populate('userId'), query)
+    const baseQuery = games.find().populate('userId');
+    
+    if (role !== USER_ROLE.ADMIN) {
+      baseQuery.where({ isApproved: true });
+    }
+
+    const gameQuery = new QueryBuilder(baseQuery, query)
       .search(['game_title', 'description'])
       .filter()
       .sort()
@@ -49,14 +59,222 @@ const getAllGameIntoDb = async (query: Record<string, unknown>) => {
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
-      error.message || 'Failed to retrieve games',
+      error.message || 'Failed to retrieve games',''
+    );
+  }
+};
+
+
+const userComment = async (payload: CommentPayload, userId: string) => {
+  try {
+    const { gameId, comment } = payload;
+
+    const user = await User.findById(userId).where({
+      isDeleted: { $ne: true },
+    });
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+    }
+
+    const game = await games
+      .findById(gameId)
+      .where({ isDelete: { $ne: true } });
+    if (!game) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Game not found or is deleted',
+        '',
+      );
+    }
+
+    const updatedGame = await games
+      .findByIdAndUpdate(
+        gameId,
+        {
+          $push: {
+            comments: { userId, comment },
+          },
+          $inc: {
+            totalComments: 1,
+          },
+        },
+        { new: true, runValidators: true },
+      )
+      .where({ isDelete: { $ne: true } })
+      .populate('userId');
+
+    if (!updatedGame) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Failed to add comment', '');
+    }
+
+    return updatedGame;
+  } catch (error: any) {
+    throw new AppError(
+      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to add comment',
       '',
     );
   }
 };
+
+const userShare = async (payload: SharePayload, userId: string) => {
+  try {
+    const { gameId } = payload;
+
+    const user = await User.findById(userId).where({
+      isDeleted: { $ne: true },
+    });
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+    }
+
+    const game = await games
+      .findById(gameId)
+      .where({ isDelete: { $ne: true } });
+    if (!game) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Game not found or is deleted',
+        '',
+      );
+    }
+
+    const alreadyShared = game.shares.some((share) =>
+      share.userId.equals(userId),
+    );
+    if (alreadyShared) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'User has already shared this game',
+        '',
+      );
+    }
+
+    const updatedGame = await games
+      .findByIdAndUpdate(
+        gameId,
+        {
+          $push: {
+            shares: { userId },
+          },
+          $inc: {
+            totalShare: 1,
+          },
+        },
+        { new: true, runValidators: true },
+      )
+      .where({ isDelete: { $ne: true } })
+      .populate('userId');
+
+    if (!updatedGame) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Failed to add share', '');
+    }
+
+    return updatedGame;
+  } catch (error: any) {
+    throw new AppError(
+      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to add share',
+      '',
+    );
+  }
+};
+
+const getTopGameOfDay = async (query: TopGameQuery) => {
+  try {
+    const { limit = 10 } = query;
+    const start = startOfDay(new Date());
+    const end = endOfDay(new Date());
+
+    const topGames = await games
+      .aggregate([
+        {
+          $match: {
+            isDelete: { $ne: true },
+            isApproved: true,
+            createdAt: { $gte: start, $lte: end },
+          },
+        },
+        {
+          $addFields: {
+            popularityScore: { $add: ['$totalComments', '$totalShare'] },
+          },
+        },
+        { $sort: { popularityScore: -1, createdAt: -1 } },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'userId',
+          },
+        },
+        { $unwind: '$userId' },
+      ])
+      .exec();
+
+    return topGames;
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to retrieve top games of the day',
+      '',
+    );
+  }
+};
+
+const getTopGameOfWeek = async (query: TopGameQuery) => {
+  try {
+    const { limit = 10 } = query;
+    const start = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const end = endOfWeek(new Date(), { weekStartsOn: 1 });
+
+    const topGames = await games
+      .aggregate([
+        {
+          $match: {
+            isDelete: { $ne: true },
+            isApproved: true,
+            createdAt: { $gte: start, $lte: end },
+          },
+        },
+        {
+          $addFields: {
+            popularityScore: { $add: ['$totalComments', '$totalShare'] },
+          },
+        },
+        { $sort: { popularityScore: -1, createdAt: -1 } },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'userId',
+          },
+        },
+        { $unwind: '$userId' },
+      ])
+      .exec();
+
+    return topGames;
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to retrieve top games of the week',
+      '',
+    );
+  }
+};
+
 const GameServices = {
   createNewGameIntoDb,
-  getAllGameIntoDb
+  getAllGameIntoDb,
+  userComment,
+  userShare,
+  getTopGameOfDay,
+  getTopGameOfWeek,
 };
 
 export default GameServices;
