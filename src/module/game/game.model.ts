@@ -23,6 +23,10 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       type: String,
       required: true,
     },
+    price: {
+      type: Number,
+      required: true,
+    },
     steam_link: {
       type: String,
       required: true,

@@ -8,7 +8,7 @@ import { USER_ROLE } from '../user/user.constant';
 
 const router = express.Router();
 
-router.get('/getAllGames', GameController.getAllGame);
+router.get('/getAllGame', GameController.getAllGame);
 router.post(
   '/approveGame',
   auth(USER_ROLE.ADMIN),

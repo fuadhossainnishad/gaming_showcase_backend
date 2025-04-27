@@ -23,6 +23,7 @@ export interface GameInterface {
     | 'Racing'
     | 'Shooter';
   description: string;
+  price: number;
   steam_link: string;
   x_link: string;
   linkedin_link: string;

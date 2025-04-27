@@ -8,3 +8,5 @@ export const USER_ROLE = {
 export type updateUserProfileType = Partial<
   Pick<IUser, 'name' | 'userId' | 'bio' | 'links' | 'photo' | 'password'>
 >;
+
+export type UserRole = keyof typeof USER_ROLE

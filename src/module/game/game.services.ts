@@ -6,7 +6,7 @@ import QueryBuilder from '../../app/builder/QueryBuilder';
 import User from '../user/user.model';
 import { CommentPayload, SharePayload, TopGameQuery } from './game.type';
 import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
-import { USER_ROLE } from '../user/user.constant';
+import { USER_ROLE, UserRole } from '../user/user.constant';
 
 interface RequestWithFiles extends Request {
   files: Express.Multer.File[];
@@ -15,11 +15,15 @@ interface RequestWithFiles extends Request {
 const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   try {
     if (!req.files || req.files.length === 0) {
-      throw new AppError(httpStatus.NOT_FOUND, 'file is not uploaded', '');
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'At least one file must be uploaded',
+        '',
+      );
     }
 
     if (!req.body) {
-      throw new AppError(httpStatus.NOT_FOUND, 'body data is not uploaded', '');
+      throw new AppError(httpStatus.BAD_REQUEST, 'Body data is required', '');
     }
 
     const media_files = req.files.map((file) => file.path);
@@ -27,20 +31,26 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
 
     const gameBuilder = new games({ ...data, media_files, userId });
     const result = await gameBuilder.save();
-    return result && { status: true, message: ' successfully upload files' };
+    return result && { status: true, message: 'Successfully uploaded files' };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
-      'create new game server is unavailable',
+      error.message || 'Create new game server is unavailable',
       '',
     );
   }
 };
 
-const getAllGameIntoDb = async (query: Record<string, unknown>, role: string) => {
+const getAllGameIntoDb = async (
+  query: Record<string, unknown>,
+  role: UserRole,
+) => {
   try {
+    if (!Object.values(USER_ROLE).includes(role)) {
+      throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
+    }
     const baseQuery = games.find().populate('userId');
-    
+
     if (role !== USER_ROLE.ADMIN) {
       baseQuery.where({ isApproved: true });
     }
@@ -59,11 +69,11 @@ const getAllGameIntoDb = async (query: Record<string, unknown>, role: string) =>
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
-      error.message || 'Failed to retrieve games',''
+      error.message || 'Failed to retrieve games',
+      '',
     );
   }
 };
-
 
 const userComment = async (payload: CommentPayload, userId: string) => {
   try {

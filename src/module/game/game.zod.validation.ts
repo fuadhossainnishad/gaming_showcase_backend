@@ -45,10 +45,6 @@ const GameSchema = z.object({
       .url({ message: 'Must be a valid Instagram URL' })
       .regex(urlPattern, { message: 'Invalid Instagram URL format' }),
 
-    media_files: z
-      .array(z.string().url({ message: 'Each media file must be a valid URL' }))
-      .min(1, { message: 'At least one media file is required' })
-      .optional(),
     isApproved: z.boolean().default(false),
   }),
 });

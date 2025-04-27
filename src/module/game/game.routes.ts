@@ -13,23 +13,32 @@ router.post(
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   upload.array('file'),
   (req: Request, res: Response, next: NextFunction) => {
-    if (req.body && req.body.data) {
-      try {
-        req.body = JSON.parse(req.body.data);
-      } catch (error) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid JSON data provided',
-          errorSources: [
-            {
-              path: '',
-              message: 'Invalid JSON data provided',
-            },
-          ],
-        });
-      }
-    } else {
-      req.body = {};
+    if (!req.body.data) {
+      return res.status(400).json({
+        success: false,
+        message: 'Data field is required',
+        errorSources: [
+          {
+            path: 'data',
+            message: 'Data field is required',
+          },
+        ],
+      });
+    }
+
+    try {
+      req.body = JSON.parse(req.body.data);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid JSON data provided',
+        errorSources: [
+          {
+            path: 'data',
+            message: 'Invalid JSON data provided',
+          },
+        ],
+      });
     }
     next();
   },
