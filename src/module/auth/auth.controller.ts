@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import catchAsync from '../../utility/catchAsync';
 import AuthServices from './auth.services';
-import sendRespone from '../../utility/sendRespone';
+import sendRespone from '../../utility/sendResponse';
 import httpStatus from 'http-status';
 import config from '../../app/config';
 

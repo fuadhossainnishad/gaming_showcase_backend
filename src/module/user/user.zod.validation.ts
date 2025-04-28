@@ -1,18 +1,19 @@
 import { z } from 'zod';
 import { USER_ROLE } from './user.constant';
+import { linksRegex, passwordRegex } from '../../constants/regex.constants';
 
 const userSignUpValidation = z.object({
   body: z.object({
     name: z
       .string({ required_error: 'Name is required' })
       .min(1, 'Name is required'),
-    email: z.string({ required_error: 'Email is required' }),
+    email: z.string({ required_error: 'Email is required' }).email(),
     role: z.enum([USER_ROLE.ADMIN, USER_ROLE.USER]).default(USER_ROLE.USER),
     password: z
       .string({ required_error: 'Password is required' })
       .min(8, 'minimum password length is 8')
       .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[a-zA-Z\d!@#$%^&*]{8,}$/,
+        passwordRegex,
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
       ),
   }),
@@ -25,7 +26,7 @@ const userSignInValidation = z.object({
       .string({ required_error: 'Password is required' })
       .min(8, 'minimum password length is 8')
       .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[a-zA-Z\d!@#$%^&*]{8,}$/,
+        passwordRegex,
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
       ),
   }),
@@ -33,6 +34,7 @@ const userSignInValidation = z.object({
 
 const userProfileUpdateValidation = z.object({
   body: z.object({
+    _id: z.string({ required_error: 'Id is required' }),
     name: z
       .string({ required_error: 'Name is required' })
       .min(1, 'Name is required')
@@ -44,12 +46,17 @@ const userProfileUpdateValidation = z.object({
       .optional(),
     bio: z.string().optional(),
     links: z
-      .array(z.string().url('Each link must be valid url'))
+      .array(
+        z
+          .string()
+          .url('Each link must be valid url')
+          .regex(linksRegex, 'Each link must match the allowed format'),
+      )
       .optional()
       .default([])
       .refine(
         (links) => {
-          links.length <= 5;
+          return links.length <= 5;
         },
         {
           message: 'Maximum 5 links are allowed',
@@ -57,7 +64,7 @@ const userProfileUpdateValidation = z.object({
       )
       .refine(
         (links) => {
-          new Set(links).size === links.length;
+          return new Set(links).size === links.length;
         },
         {
           message: 'Links must be unique',

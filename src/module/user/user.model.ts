@@ -3,27 +3,28 @@ import bcrypt from 'bcrypt';
 import config from '../../app/config';
 import { USER_ROLE } from './user.constant';
 import { IUser, IUserModel } from './user.interface';
-
-const linksRegex = /^https?:\/\/[^\s$.?#].[^\s]*$/;
+import { linksRegex } from '../../constants/regex.constants';
 
 const userSchema = new Schema<IUser, IUserModel>(
   {
     userId: {
       type: String,
-      required: [true, 'User ID is required'],
+      required: [false, 'User ID is not required'],
       unique: true,
+      sparse: true,
+      default: '',
     },
     name: {
       type: String,
-      required: [false, 'name is Required'],
+      required: [true, 'name is Required'],
     },
     email: {
       type: String,
-      required: [false, 'Email is Not Required'],
+      required: [true, 'Email is Not Required'],
     },
     password: {
       type: String,
-      required: [false, 'password is Required'],
+      required: [true, 'password is Required'],
       select: false,
     },
     role: {
@@ -76,11 +77,13 @@ userSchema.set('toJSON', {
 
 userSchema.pre('save', async function (next) {
   const user = this;
-  user.password = await bcrypt.hash(
-    user.password,
-    Number(config.bcrypt_salt_rounds as string),
-  );
-  next();
+  if (user.password) {
+    user.password = await bcrypt.hash(
+      user.password,
+      Number(config.bcrypt_salt_rounds as string),
+    );
+    next();
+  }
 });
 
 userSchema.post('save', function (doc, next) {

@@ -2,7 +2,7 @@ import { RequestHandler } from 'express';
 import catchAsync from '../../utility/catchAsync';
 import GameServices from './game.services';
 import httpStatus from 'http-status';
-import sendResponse from '../../utility/sendRespone';
+import sendResponse from '../../utility/sendResponse';
 
 const createNewGame: RequestHandler = catchAsync(async (req, res) => {
   const result = await GameServices.createNewGameIntoDb(

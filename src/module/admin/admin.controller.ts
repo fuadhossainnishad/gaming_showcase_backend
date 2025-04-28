@@ -2,7 +2,7 @@ import { RequestHandler } from 'express';
 import httpStatus from 'http-status';
 import catchAsync from '../../utility/catchAsync';
 import AdminServices from './admin.services';
-import sendResponse from '../../utility/sendRespone';
+import sendResponse from '../../utility/sendResponse';
 
 const approveGameByAdmin: RequestHandler = catchAsync(async (req, res) => {
   const result = await AdminServices.approveGame(req.body);

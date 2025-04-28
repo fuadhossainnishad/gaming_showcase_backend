@@ -1,12 +1,12 @@
 import { RequestHandler } from 'express';
 import catchAsync from '../../utility/catchAsync';
 import UserServices from './user.services';
-import sendRespone from '../../utility/sendRespone';
+import sendResponse from '../../utility/sendResponse';
 import httpStatus from 'http-status';
 
 const createUser: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserServices.createUserIntoDb(req.body);
-  sendRespone(res, {
+  sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
     message: 'successfully create user',
@@ -16,7 +16,7 @@ const createUser: RequestHandler = catchAsync(async (req, res) => {
 
 const findAllUser: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserServices.findAllUserIntoDb(req.query);
-  sendRespone(res, {
+  sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'successfully find all user',
@@ -25,8 +25,12 @@ const findAllUser: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
-  const result = await UserServices.updateUserProfileIntoDb(req.body);
-  sendRespone(res, {
+  const photoPath = req.file ? req.file.path : undefined;
+  const result = await UserServices.updateUserProfileIntoDb({
+    ...req.body,
+    photo: photoPath,
+  });
+  sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'successfully updated user profile',

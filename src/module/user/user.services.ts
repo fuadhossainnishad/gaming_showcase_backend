@@ -10,7 +10,9 @@ import AppError from '../../app/error/AppError';
 
 const createUserIntoDb = async (payload: IUser) => {
   try {
+    console.log(payload);
     const createUserBuilder = new User(payload);
+    console.log(createUserBuilder);
     const result = await createUserBuilder.save();
     return result && { status: true, message: 'successfully create user' };
   } catch (error: any) {
@@ -48,12 +50,14 @@ const findAllUserIntoDb = async (query: Record<string, unknown>) => {
   }
 };
 
-const updateUserProfileIntoDb = async (payload: updateUserProfileType) => {
+const updateUserProfileIntoDb = async (
+  payload: updateUserProfileType & { _id: string },
+) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { userId, password, ...updateFields } = payload;
+    const { _id, userId, password, ...updateFields } = payload;
 
     // if (password) {
     //   updateFields.password = await bcrypt.hash(
@@ -63,7 +67,7 @@ const updateUserProfileIntoDb = async (payload: updateUserProfileType) => {
     // }
 
     const updatedUser = await User.findOneAndUpdate(
-      { userId, isDeleted: { $ne: true } },
+      { _id, isDeleted: { $ne: true } },
       { $set: updateFields },
       { new: true, runValidators: true, session },
     ).select('-password');
