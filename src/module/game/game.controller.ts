@@ -73,6 +73,20 @@ const getTopGameOfWeek: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const updateGame: RequestHandler = catchAsync(async (req, res) => {
+  const result = await GameServices.updateGameIntoDb(
+    req.user.id,
+    req.body,
+    req.files,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Game update submitted for approval',
+    data: result,
+  });
+});
+
 const GameController = {
   createNewGame,
   getAllGame,
@@ -80,6 +94,7 @@ const GameController = {
   addShare,
   getTopGameOfDay,
   getTopGameOfWeek,
+  updateGame,
 };
 
 export default GameController;

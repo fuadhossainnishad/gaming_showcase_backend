@@ -10,7 +10,22 @@ router.post(
   validationRequest(AuthValidationSchema.userSignInValidation),
   AuthController.loginUser,
 );
+router.post(
+  '/forgot_password',
+  validationRequest(AuthValidationSchema.forgotPasswordValidation),
+  AuthController.requestForgotPassword,
+);
 
+router.post(
+  '/verify_forgot_password',
+  validationRequest(AuthValidationSchema.verifyForgotPasswordValidation),
+  AuthController.verifyForgotPassword,
+);
+router.patch(
+  '/update-password',
+  validationRequest(AuthValidationSchema.updateUserPasswordValidation),
+  AuthController.updateUserPassword,
+);
 const AuthRouter = router;
 
 export default AuthRouter;

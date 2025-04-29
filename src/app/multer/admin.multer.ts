@@ -1,10 +1,9 @@
 import multer from 'multer';
 import path from 'path';
 
-const gameStorage = multer.diskStorage({
+const adminStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const userId = req.body.userId || req.body._id;
-    const uploadDir = path.join(process.cwd(), `src/uploads/${userId}/games/`);
+    const uploadDir = path.join(process.cwd(), `src/uploads/admin/heroImages/`);
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -13,4 +12,4 @@ const gameStorage = multer.diskStorage({
   },
 });
 
-export const uploadGames = multer({ storage: gameStorage });
+export const uploadGames = multer({ storage: adminStorage });

@@ -4,6 +4,7 @@ import config from '../../app/config';
 import { USER_ROLE } from './user.constant';
 import { IUser, IUserModel } from './user.interface';
 import { linksRegex } from '../../constants/regex.constants';
+import { boolean } from 'zod';
 
 const userSchema = new Schema<IUser, IUserModel>(
   {
@@ -20,7 +21,7 @@ const userSchema = new Schema<IUser, IUserModel>(
     },
     email: {
       type: String,
-      required: [true, 'Email is Not Required'],
+      required: [true, 'Email is Required'],
     },
     password: {
       type: String,
@@ -51,6 +52,11 @@ const userSchema = new Schema<IUser, IUserModel>(
       required: [false, 'photo is not require'],
       default: null,
     },
+    approvedUpdate: {
+      type: Boolean,
+      required: [false, 'Approved update is not require'],
+      default: false,
+    },
     uploadedGame: {
       type: [String],
       required: [false, 'photo is not require'],
@@ -77,11 +83,20 @@ userSchema.set('toJSON', {
 
 userSchema.pre('save', async function (next) {
   const user = this;
-  if (user.password) {
+  if (user.password && user.isModified('password')) {
     user.password = await bcrypt.hash(
       user.password,
       Number(config.bcrypt_salt_rounds as string),
     );
+    if (
+      !user.approvedUpdate &&
+      (user.isModified('name') ||
+        user.isModified('bio') ||
+        user.isModified('links') ||
+        user.isModified('photo'))
+    ) {
+      throw new Error('Profile updates must be submitted for admin approval');
+    }
     next();
   }
 });

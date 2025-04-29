@@ -10,8 +10,21 @@ export interface IUser {
   bio?: string;
   links?: string[];
   photo?: string;
+  approvedUpdate: boolean;
   uploadedGame?: string[];
   isDeleted?: boolean;
+}
+
+export interface IPendingUserUpdate {
+  userId: string;
+  name?: string;
+  bio?: string;
+  links?: string[];
+  photo?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: Date;
+  reviewedBy?: string;
+  reviewedAt?: Date;
 }
 
 // Define the static methods interface

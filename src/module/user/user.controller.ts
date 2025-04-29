@@ -38,10 +38,21 @@ const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const submitProfileUpdate: RequestHandler = catchAsync(async (req, res) => {
+  const result = await UserServices.submitProfileUpdate(req.user.id, req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Profile update submitted for approval',
+    data: result,
+  });
+});
+
 const UserController = {
   createUser,
   findAllUser,
   updateProfileUser,
+  submitProfileUpdate
 };
 
 export default UserController;

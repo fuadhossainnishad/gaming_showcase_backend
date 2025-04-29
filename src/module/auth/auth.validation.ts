@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { emailRegex, passwordRegex } from '../../constants/regex.constants';
 
 const userSignInValidation = z.object({
   body: z.object({
@@ -7,14 +8,68 @@ const userSignInValidation = z.object({
       .string({ required_error: 'Password is required' })
       .min(8, 'minimum password length is 8')
       .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[a-zA-Z\d!@#$%^&*]{8,}$/,
+        passwordRegex,
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
       ),
   }),
 });
 
+const updateUserPasswordValidation = z.object({
+  body: z.object({
+    userId: z.string({ required_error: 'User id is required' }),
+    password: z
+      .string({ required_error: 'Password is required' })
+      .min(8, 'minimum password length is 8')
+      .regex(
+        passwordRegex,
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      ),
+    newPassword: z
+      .string({ required_error: 'Password is required' })
+      .min(8, 'minimum password length is 8')
+      .regex(
+        passwordRegex,
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      ),
+  }),
+});
+
+const forgotPasswordValidation = z.object({
+  body: z.object({
+    userId: z.string({ required_error: 'User Id is required' }),
+    email: z
+      .string({ required_error: 'Email is required' })
+      .regex(emailRegex, 'Valid email is required')
+      .email('Email must be a valid email address'),
+  }),
+});
+
+const verifyForgotPasswordValidation = z.object({
+  body: z
+    .object({
+      email: z
+        .string({ required_error: 'Email is required' })
+        .regex(emailRegex, 'Valid email is required')
+        .email('Email must be a valid email address'),
+      otp: z
+        .string({ required_error: 'OTP is required' })
+        .length(6, 'OTP must be 6 digits')
+        .regex(/^\d{6}$/, 'OTP must be a 6-digit number'),
+      newPassword: z
+        .string({ required_error: 'New password is required' })
+        .regex(
+          passwordRegex,
+          'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+        ),
+    })
+    .strict({ message: 'Only email, otp, and newPassword fields are allowed' }),
+});
+
 const AuthValidationSchema = {
   userSignInValidation,
+  updateUserPasswordValidation,
+  forgotPasswordValidation,
+  verifyForgotPasswordValidation,
 };
 
 export default AuthValidationSchema;

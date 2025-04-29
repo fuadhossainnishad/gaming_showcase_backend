@@ -19,5 +19,10 @@ router.post(
   uploadProfile.single('photo'),
   UserController.updateProfileUser,
 );
-
+router.post(
+  '/profile/update',
+  verifyToken,
+  validationRequest(userValidation.userProfileUpdateValidation),
+  UserController.submitProfileUpdate,
+);
 export const UserRouter = router;

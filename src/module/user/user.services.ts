@@ -2,11 +2,12 @@ import httpStatus from 'http-status';
 
 import User from './user.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
-import { IUser } from './user.interface';
+import { IPendingUserUpdate, IUser } from './user.interface';
 import mongoose from 'mongoose';
 import { updateUserProfileType } from './user.constant';
 import config from '../../app/config';
 import AppError from '../../app/error/AppError';
+import PendingUserUpdate from './userUpdateProfile';
 
 const createUserIntoDb = async (payload: IUser) => {
   try {
@@ -93,11 +94,45 @@ const updateUserProfileIntoDb = async (
     session.endSession();
   }
 };
+const submitProfileUpdate = async (
+  userId: string,
+  payload: IPendingUserUpdate,
+) => {
+  const user = await User.findOne({ userId, isDeleted: { $ne: true } });
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+  }
 
+  const existingUpdate = await PendingUserUpdate.findOne({
+    userId,
+    status: 'pending',
+  });
+  if (existingUpdate) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'You already have a pending profile update',
+      '',
+    );
+  }
+
+  const updateData = {
+    userId,
+    name: payload.name,
+    bio: payload.bio,
+    links: payload.links,
+    photo: payload.photo,
+    status: 'pending',
+    submittedAt: new Date(),
+  };
+
+  const pendingUpdate = await PendingUserUpdate.create(updateData);
+  return pendingUpdate;
+};
 const UserServices = {
   createUserIntoDb,
   findAllUserIntoDb,
   updateUserProfileIntoDb,
+  submitProfileUpdate,
 };
 
 export default UserServices;

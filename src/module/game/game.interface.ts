@@ -38,6 +38,25 @@ export interface GameInterface {
   isDelete?: boolean;
 }
 
+export interface IPendingGameUpdate {
+  gameId: import('mongoose').Types.ObjectId;
+  userId: string;
+  game_title?: string;
+  category?: string;
+  description?: string;
+  price?: number;
+  steam_link?: string;
+  x_link?: string;
+  linkedin_link?: string;
+  reddit_link?: string;
+  instagram_link?: string;
+  media_files?: string[];
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: Date;
+  reviewedBy?: string;
+  reviewedAt?: Date;
+}
+
 export interface CreateGameModel extends Model<GameInterface> {
   // eslint-disable-next-line no-unused-vars
   isExistGame(id: string): Promise<GameInterface>;

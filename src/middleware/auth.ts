@@ -28,14 +28,14 @@ const auth = (...requireRoles: TUserRole[]) => {
       throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized', '');
     }
 
-    const { role, id } = decoded;
+    const { role, id, email } = decoded;
 
-    const isUserExist = users.findOne({ _id: id }, { _id: 1 });
+    const isUserExist = await users.findOne({ _id: id }, { _id: 1 });
     if (!isUserExist) {
       throw new AppError(httpStatus.NOT_FOUND, 'This User is Not Founded', '');
     }
     if (requireRoles && !requireRoles.includes(role)) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'Yout Role Not Exist', '');
+      throw new AppError(httpStatus.UNAUTHORIZED, 'Your Role Not Exist', '');
     }
     req.user = decoded as JwtPayload;
 

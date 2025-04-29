@@ -4,9 +4,12 @@ import AppError from '../../app/error/AppError';
 import games from './game.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
 import User from '../user/user.model';
-import { CommentPayload, SharePayload, TopGameQuery } from './game.type';
+import { CommentPayload, SharePayload, TGameUpdate, TopGameQuery } from './game.type';
 import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
 import { USER_ROLE, UserRole } from '../user/user.constant';
+import PendingGameUpdate from './gameUpdate.model';
+import { IPendingGameUpdate } from './game.interface';
+import mongoose from 'mongoose';
 
 interface RequestWithFiles extends Request {
   files: Express.Multer.File[];
@@ -278,6 +281,52 @@ const getTopGameOfWeek = async (query: TopGameQuery) => {
   }
 };
 
+const updateGameIntoDb = async (userId: string, payload: TGameUpdate, files?: Express.Multer.File[]) => {
+  const { gameId, ...updateData } = payload;
+
+  if (!mongoose.Types.ObjectId.isValid(gameId)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid game ID', '');
+  }
+
+  const game = await games.findById(gameId).where({ isDeleted: { $ne: true } });
+  if (!game) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Game not found or is deleted', '');
+  }
+
+  if (game.userId !== userId) {
+    throw new AppError(httpStatus.FORBIDDEN, 'You can only update your own games', '');
+  }
+
+  const existingUpdate = await PendingGameUpdate.findOne({
+    gameId: new mongoose.Types.ObjectId(gameId),
+    userId,
+    status: 'pending',
+  });
+  if (existingUpdate) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'You already have a pending game update', '');
+  }
+
+  const pendingUpdateData: Partial<IPendingGameUpdate> = {
+    gameId: new mongoose.Types.ObjectId(gameId),
+    userId,
+    game_title: updateData.game_title,
+    category: updateData.category,
+    description: updateData.description,
+    price: updateData.price,
+    steam_link: updateData.steam_link,
+    x_link: updateData.x_link,
+    linkedin_link: updateData.linkedin_link,
+    reddit_link: updateData.reddit_link,
+    instagram_link: updateData.instagram_link,
+    media_files: files ? files.map((file) => file.path) : updateData.media_files,
+    status: 'pending',
+    submittedAt: new Date(),
+  };
+
+  const pendingUpdate = await PendingGameUpdate.create(pendingUpdateData);
+  return pendingUpdate;
+};
+
 const GameServices = {
   createNewGameIntoDb,
   getAllGameIntoDb,
@@ -285,6 +334,7 @@ const GameServices = {
   userShare,
   getTopGameOfDay,
   getTopGameOfWeek,
+  updateGameIntoDb
 };
 
 export default GameServices;

@@ -15,8 +15,42 @@ const approveGameByAdmin: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getPendingProfileUpdates: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AdminServices.getPendingProfileUpdates();
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Pending profile updates retrieved successfully',
+    data: result,
+  });
+});
+
+const approveProfileUpdateByAdmin: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AdminServices.approveProfileUpdate(req.user!.id, req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Profile update approved successfully',
+    data: result,
+  });
+});
+
+const rejectProfileUpdateByAdmin: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AdminServices.rejectProfileUpdate(req.user!.id, req.body.updateId);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Profile update rejected successfully',
+    data: result,
+  });
+});
+
+
 const AdminController = {
   approveGameByAdmin,
+  getPendingProfileUpdates,
+  approveProfileUpdateByAdmin,
+  rejectProfileUpdateByAdmin
 };
 
 export default AdminController;

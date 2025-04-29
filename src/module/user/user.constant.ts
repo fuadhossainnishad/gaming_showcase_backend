@@ -10,3 +10,4 @@ export type updateUserProfileType = Partial<
 >;
 
 export type UserRole = keyof typeof USER_ROLE;
+

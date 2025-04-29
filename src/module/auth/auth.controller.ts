@@ -4,6 +4,8 @@ import AuthServices from './auth.services';
 import sendRespone from '../../utility/sendResponse';
 import httpStatus from 'http-status';
 import config from '../../app/config';
+import sendResponse from '../../utility/sendResponse';
+import { verify } from 'jsonwebtoken';
 
 const loginUser: RequestHandler = catchAsync(async (req, res) => {
   const result = await AuthServices.loginUserIntoDb(req.body);
@@ -13,7 +15,7 @@ const loginUser: RequestHandler = catchAsync(async (req, res) => {
     secure: config.NODE_ENV === 'production',
     httpOnly: true,
   });
-  sendRespone(res, {
+  sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'Successfully Login',
@@ -23,8 +25,41 @@ const loginUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const requestForgotPassword: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AuthServices.requestForgotPassword(req.body.email);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'OTP sent to your email',
+    data: result,
+  });
+});
+
+const verifyForgotPassword: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AuthServices.verifyForgotPassword(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Password reset successfully',
+    data: result,
+  });
+});
+
+const updateUserPassword: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AuthServices.updateUserPassword(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Password updated successfully',
+    data: result,
+  });
+});
+
 const AuthController = {
   loginUser,
+  requestForgotPassword,
+  verifyForgotPassword,
+  updateUserPassword
 };
 
 export default AuthController;

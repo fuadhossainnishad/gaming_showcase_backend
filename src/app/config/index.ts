@@ -12,4 +12,8 @@ export default {
   expires_in: process.env.EXPIRES_IN,
   jwt_refresh_secret: process.env.JWT_REFRESH_SECRET,
   refresh_expires_in: process.env.REFRESH_EXPIRES_IN,
+  smtp_host: process.env.SMTP_HOST,
+  smtp_port: process.env.SMTP_PORT,
+  owner_mail: process.env.OWNER_MAIL,
+  mail_password: process.env.MAIL_PASSWORD,
 };
