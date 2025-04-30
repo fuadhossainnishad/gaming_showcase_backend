@@ -30,7 +30,7 @@ const createNewGame: RequestHandler = catchAsync(async (req, res) => {
 
 const getAllGame: RequestHandler = catchAsync(async (req, res) => {
   if (!req.user) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Accessor is not authenticated', '');
   }
   const result = await GameServices.getAllGameIntoDb(req.query, req.user.role);
 

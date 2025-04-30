@@ -11,7 +11,7 @@ const router = express.Router();
 router.post(
   '/upload_game',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  upload.array('file'),
+  upload.array('media_files', 5),
   validationRequest(GameValidationSchema.GameSchema),
   GameController.createNewGame,
 );
@@ -19,7 +19,7 @@ router.post(
 router.post(
   '/update_game',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  upload.array('file'),
+  upload.array('media_files'),
   validationRequest(GameValidationSchema.GameUpdateSchema),
   GameController.updateGame,
 );

@@ -8,7 +8,11 @@ import { USER_ROLE } from '../user/user.constant';
 
 const router = express.Router();
 
-router.get('/getAllGame', GameController.getAllGame);
+router.get('/getAllGame',
+  auth(USER_ROLE.ADMIN),
+  GameController.getAllGame
+);
+
 router.post(
   '/approveGame',
   auth(USER_ROLE.ADMIN),
@@ -34,6 +38,12 @@ router.post(
   auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.rejectProfileUpdateValidation),
   AdminController.rejectProfileUpdateByAdmin,
+);
+
+router.get(
+  '/dashboard',
+  auth(USER_ROLE.ADMIN),
+  AdminController.getDashboardStats,
 );
 
 const AdminRouter = router;

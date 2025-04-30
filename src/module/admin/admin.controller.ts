@@ -45,12 +45,22 @@ const rejectProfileUpdateByAdmin: RequestHandler = catchAsync(async (req, res) =
   });
 });
 
+const getDashboardStats: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AdminServices.getDashboardStats();
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Dashboard statistics retrieved successfully',
+    data: result,
+  });
+});
 
 const AdminController = {
   approveGameByAdmin,
   getPendingProfileUpdates,
   approveProfileUpdateByAdmin,
-  rejectProfileUpdateByAdmin
+  rejectProfileUpdateByAdmin,
+  getDashboardStats
 };
 
 export default AdminController;

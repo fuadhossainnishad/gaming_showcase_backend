@@ -122,11 +122,50 @@ const rejectProfileUpdate = async (adminId: string, updateId: string) => {
   return { message: 'Profile update rejected successfully' };
 };
 
+const getDashboardStats = async () => {
+  const totalUsers = await User.countDocuments({ isDeleted: false });
+  const totalGames = await games.countDocuments({ isDeleted: false });
+
+  const userGames = await games.aggregate([
+    { $match: { isDeleted: false } },
+    {
+      $group: {
+        _id: '$createdBy',
+        gameCount: { $sum: 1 },
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    { $unwind: '$user' },
+    {
+      $project: {
+        userId: '$user._id',
+        userName: '$user.name',
+        userEmail: '$user.email',
+        gameCount: 1,
+      },
+    },
+  ]);
+
+  return {
+    totalUsers,
+    totalGames,
+    userGames,
+  };
+};
+
 const AdminServices = {
   approveGame,
   getPendingProfileUpdates,
   approveProfileUpdate,
   rejectProfileUpdate,
+  getDashboardStats
 };
 
 export default AdminServices;
