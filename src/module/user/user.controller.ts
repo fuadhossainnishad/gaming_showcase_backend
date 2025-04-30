@@ -39,7 +39,10 @@ const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const submitProfileUpdate: RequestHandler = catchAsync(async (req, res) => {
-  const result = await UserServices.submitProfileUpdate(req.user.id, req.body);
+  const result = await UserServices.submitProfileUpdate(
+    req.body.userId,
+    req.body,
+  );
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -52,7 +55,7 @@ const UserController = {
   createUser,
   findAllUser,
   updateProfileUser,
-  submitProfileUpdate
+  submitProfileUpdate,
 };
 
 export default UserController;

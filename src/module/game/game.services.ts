@@ -8,7 +8,7 @@ import { CommentPayload, SharePayload, TGameUpdate, TopGameQuery } from './game.
 import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
 import { USER_ROLE, UserRole } from '../user/user.constant';
 import PendingGameUpdate from './gameUpdate.model';
-import { IPendingGameUpdate } from './game.interface';
+import { GameInterface, IPendingGameUpdate } from './game.interface';
 import mongoose from 'mongoose';
 
 interface RequestWithFiles extends Request {
@@ -16,32 +16,36 @@ interface RequestWithFiles extends Request {
 }
 
 const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'At least one file must be uploaded',
-        '',
-      );
-    }
+  const files = req.files; // Type: Express.Multer.File[] | undefined
+  const payload = req.body as Omit<
+    GameInterface,
+    'userId' | 'comments' | 'totalComments' | 'shares' | 'totalShare' | 'isApproved' | 'isDelete'
+  >;
 
-    if (!req.body) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'Body data is required', '');
-    }
+  const mediaFiles = files?.map((file) => file.path) || [];
 
-    const media_files = req.files.map((file) => file.path);
-    const data = req.body;
+  const gameData: GameInterface = {
+    userId: userId,
+    game_title: payload.game_title,
+    category: payload.category,
+    description: payload.description,
+    price: parseFloat(payload.price as any),
+    steam_link: payload.steam_link,
+    x_link: payload.x_link,
+    linkedin_link: payload.linkedin_link,
+    reddit_link: payload.reddit_link,
+    instagram_link: payload.instagram_link,
+    media_files: mediaFiles,
+    comments: [],
+    totalComments: 0,
+    shares: [],
+    totalShare: 0,
+    isApproved: false,
+    isDelete: false,
+  };
 
-    const gameBuilder = new games({ ...data, media_files, userId });
-    const result = await gameBuilder.save();
-    return result && { status: true, message: 'Successfully uploaded files' };
-  } catch (error: any) {
-    throw new AppError(
-      httpStatus.SERVICE_UNAVAILABLE,
-      error.message || 'Create new game server is unavailable',
-      '',
-    );
-  }
+  const result = await games.create(gameData);
+  return result;
 };
 
 const getAllGameIntoDb = async (
@@ -293,7 +297,7 @@ const updateGameIntoDb = async (userId: string, payload: TGameUpdate, files?: Ex
     throw new AppError(httpStatus.NOT_FOUND, 'Game not found or is deleted', '');
   }
 
-  if (game.userId !== userId) {
+  if (game.userId.toString() !== userId) {
     throw new AppError(httpStatus.FORBIDDEN, 'You can only update your own games', '');
   }
 

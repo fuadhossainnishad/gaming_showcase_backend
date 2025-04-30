@@ -11,9 +11,7 @@ const userSchema = new Schema<IUser, IUserModel>(
     userId: {
       type: String,
       required: [false, 'User ID is not required'],
-      unique: true,
       sparse: true,
-      default: '',
     },
     name: {
       type: String,
@@ -83,25 +81,46 @@ userSchema.set('toJSON', {
 
 userSchema.pre('save', async function (next) {
   const user = this;
+
+  if (user.isNew) {
+    // New user — hash password and allow save
+    if (user.password) {
+      user.password = await bcrypt.hash(
+        user.password,
+        Number(config.bcrypt_salt_rounds as string),
+      );
+    }
+    return next();
+  }
+
+  // Existing user update — enforce admin approval for profile fields
+  if (
+    !user.approvedUpdate &&
+    (user.isModified('name') ||
+      user.isModified('bio') ||
+      user.isModified('links') ||
+      user.isModified('photo'))
+  ) {
+    return next(
+      new Error('Profile updates must be submitted for admin approval'),
+    );
+  }
+
   if (user.password && user.isModified('password')) {
     user.password = await bcrypt.hash(
       user.password,
       Number(config.bcrypt_salt_rounds as string),
     );
-    if (
-      !user.approvedUpdate &&
-      (user.isModified('name') ||
-        user.isModified('bio') ||
-        user.isModified('links') ||
-        user.isModified('photo'))
-    ) {
-      throw new Error('Profile updates must be submitted for admin approval');
-    }
-    next();
   }
+
+  next();
 });
 
-userSchema.post('save', function (doc, next) {
+userSchema.post('save', async function (doc, next) {
+  if (!doc.userId) {
+    doc.userId = doc._id.toString();
+    await doc.model('User').findByIdAndUpdate(doc._id, { userId: doc.userId });
+  }
   doc.password = '';
   next();
 });

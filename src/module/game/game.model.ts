@@ -6,7 +6,7 @@ import { boolean, number } from 'zod';
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: 'User',
       required: true,
     },

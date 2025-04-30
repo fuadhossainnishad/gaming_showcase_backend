@@ -1,20 +1,27 @@
-import { NextFunction, Request, Response } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+// src/middleware/auth.ts
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import httpStatus from 'http-status';
 import AppError from '../app/error/AppError';
-
 import catchAsync from '../utility/catchAsync';
-
 import config from '../app/config';
-
 import users from '../module/user/user.model';
-import { TUserRole } from '../module/user/user.interface';
+import { UserRole } from '../module/user/user.constant'; // Use UserRole
+import { UserPayload } from '../types/express';
 
-const auth = (...requireRoles: TUserRole[]) => {
+const auth = (...requireRoles: UserRole[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      throw new AppError(httpStatus.UNAUTHORIZED, 'No token provided', '');
+    }
+
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : authHeader;
+
     if (!token) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not Authorized', '');
+      throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token format', '');
     }
 
     let decoded;
@@ -23,9 +30,9 @@ const auth = (...requireRoles: TUserRole[]) => {
       decoded = jwt.verify(
         token,
         config.jwt_access_secret as string,
-      ) as JwtPayload;
+      ) as UserPayload; 
     } catch (error) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'Unauthorized', '');
+      throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid or expired token', '');
     }
 
     const { role, id, email } = decoded;
@@ -37,7 +44,7 @@ const auth = (...requireRoles: TUserRole[]) => {
     if (requireRoles && !requireRoles.includes(role)) {
       throw new AppError(httpStatus.UNAUTHORIZED, 'Your Role Not Exist', '');
     }
-    req.user = decoded as JwtPayload;
+    req.user = decoded;
 
     next();
   });

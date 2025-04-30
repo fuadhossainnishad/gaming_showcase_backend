@@ -3,6 +3,7 @@ import validationRequest from '../../middleware/validationRequest';
 import { userValidation } from './user.zod.validation';
 import UserController from './user.controller';
 import { uploadProfile } from '../../app/multer/profile.multer';
+import verifyToken from '../../middleware/verifyToken';
 
 const router = express.Router();
 

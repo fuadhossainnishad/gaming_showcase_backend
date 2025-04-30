@@ -10,7 +10,7 @@ export interface ShareInterface {
 }
 
 export interface GameInterface {
-  userId: Types.ObjectId;
+  userId: string;
   game_title: string;
   category:
     | 'Action'

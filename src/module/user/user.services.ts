@@ -20,7 +20,7 @@ const createUserIntoDb = async (payload: IUser) => {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
       ' createUserIntoDb server unavailable',
-      '',
+      error.message,
     );
   }
 };
@@ -38,10 +38,10 @@ const findAllUserIntoDb = async (query: Record<string, unknown>) => {
       .pagination()
       .fields();
 
-    const allusers = (await allUserQuery.modelQuery) as any;
+    const allUsers = (await allUserQuery.modelQuery) as any;
     const meta = await allUserQuery.countTotal();
 
-    return { meta, allusers };
+    return { meta, allUsers };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
@@ -98,7 +98,7 @@ const submitProfileUpdate = async (
   userId: string,
   payload: IPendingUserUpdate,
 ) => {
-  const user = await User.findOne({ userId, isDeleted: { $ne: true } });
+  const user = await User.findOne({ userId: userId, isDeleted: { $ne: true } });
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
   }
