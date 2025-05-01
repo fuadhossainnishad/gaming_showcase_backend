@@ -165,7 +165,7 @@ const AdminServices = {
   getPendingProfileUpdates,
   approveProfileUpdate,
   rejectProfileUpdate,
-  getDashboardStats
+  getDashboardStats,
 };
 
 export default AdminServices;

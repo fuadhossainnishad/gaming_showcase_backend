@@ -16,7 +16,7 @@ export type TGameUpdate = {
   game_title?: string;
   category?: string;
   description?: string;
-  price?: number;
+  price?: string;
   steam_link?: string;
   x_link?: string;
   linkedin_link?: string;

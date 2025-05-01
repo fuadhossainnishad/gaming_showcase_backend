@@ -1,7 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { CreateGameModel, GameInterface } from './game.interface';
 import { gameCategory } from './game.constant';
-import { boolean, number } from 'zod';
 
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
   {
@@ -9,6 +8,11 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       type: String,
       ref: 'User',
       required: true,
+    },
+    gameId: {
+      type: String,
+      required: false,
+      unique: true,
     },
     game_title: {
       type: String,
@@ -24,7 +28,7 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       required: true,
     },
     price: {
-      type: Number,
+      type: String,
       required: true,
     },
     steam_link: {
@@ -55,7 +59,7 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       type: [
         {
           userId: {
-            type: Schema.Types.ObjectId,
+            type: String,
             ref: 'User',
             required: true,
           },
@@ -75,7 +79,7 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       type: [
         {
           userId: {
-            type: Schema.Types.ObjectId,
+            type: String,
             ref: 'User',
             required: true,
           },
@@ -101,7 +105,7 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
   },
 );
 
-// middleware
+// Middleware
 GameSchema.pre('find', function (next) {
   this.where({ isDelete: { $ne: true } });
   next();
@@ -112,6 +116,14 @@ GameSchema.pre('aggregate', function (next) {
 });
 GameSchema.pre('findOne', function (next) {
   this.find({ isDelete: { $ne: true } });
+  next();
+});
+
+// Set gameId before saving
+GameSchema.pre('save', function (next) {
+  if (!this.gameId) {
+    this.gameId = this._id.toString();
+  }
   next();
 });
 

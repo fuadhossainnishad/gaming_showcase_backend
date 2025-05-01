@@ -1,51 +1,51 @@
 import { z } from 'zod';
 import { gameCategory } from './game.constant';
-import httpStatus from 'http-status';
-import AppError from '../../app/error/AppError';
 
 const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+
 const GameSchema = z.object({
   body: z.object({
+    gameId: z.string().optional(), // Optional, set by server
+    userId: z.string({ required_error: 'User ID is required' }),
     game_title: z
       .string()
       .min(1, { message: 'Game title is required' })
       .max(100, { message: 'Game title cannot exceed 100 characters' }),
-
     category: z.enum(gameCategory as [string, ...string[]], {
       message: `Category must be one of: ${gameCategory.join(', ')}`,
     }),
-
     description: z
       .string()
       .min(10, { message: 'Description must be at least 10 characters' })
-      .max(2000, { message: 'Description cannot exceed 2000 characters' }),
-
+      .max(2000, { message: 'Description cannot exceed 2000 characters' })
+      .optional(),
+    price: z.string().optional(),
     steam_link: z
       .string()
       .url({ message: 'Must be a valid Steam URL' })
-      .regex(urlPattern, { message: 'Invalid Steam URL format' }),
-
+      .regex(urlPattern, { message: 'Invalid Steam URL format' })
+      .optional(),
     x_link: z
       .string()
       .url({ message: 'Must be a valid X URL' })
-      .regex(urlPattern, { message: 'Invalid X URL format' }),
-
+      .regex(urlPattern, { message: 'Invalid X URL format' })
+      .optional(),
     linkedin_link: z
       .string()
       .url({ message: 'Must be a valid LinkedIn URL' })
-      .regex(urlPattern, { message: 'Invalid LinkedIn URL format' }),
-
+      .regex(urlPattern, { message: 'Invalid LinkedIn URL format' })
+      .optional(),
     reddit_link: z
       .string()
       .url({ message: 'Must be a valid Reddit URL' })
-      .regex(urlPattern, { message: 'Invalid Reddit URL format' }),
-
+      .regex(urlPattern, { message: 'Invalid Reddit URL format' })
+      .optional(),
     instagram_link: z
       .string()
       .url({ message: 'Must be a valid Instagram URL' })
-      .regex(urlPattern, { message: 'Invalid Instagram URL format' }),
-
-    isApproved: z.boolean().default(false),
+      .regex(urlPattern, { message: 'Invalid Instagram URL format' })
+      .optional(),
+    isApproved: z.boolean().default(false).optional(),
   }),
 });
 
@@ -94,7 +94,7 @@ const GameUpdateSchema = z.object({
         .min(10, 'Description must be at least 10 characters')
         .max(2000, 'Description cannot exceed 2000 characters')
         .optional(),
-      price: z.number().min(0, 'Price cannot be negative').optional(),
+      price: z.string().optional(),
       steam_link: z
         .string()
         .url('Must be a valid Steam URL')

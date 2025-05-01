@@ -83,7 +83,6 @@ userSchema.pre('save', async function (next) {
   const user = this;
 
   if (user.isNew) {
-    // New user — hash password and allow save
     if (user.password) {
       user.password = await bcrypt.hash(
         user.password,
@@ -93,7 +92,6 @@ userSchema.pre('save', async function (next) {
     return next();
   }
 
-  // Existing user update — enforce admin approval for profile fields
   if (
     !user.approvedUpdate &&
     (user.isModified('name') ||
@@ -156,6 +154,5 @@ userSchema.statics.isJWTIssuesBeforePasswordChange = async function (
   return passwordChangeTime > jwtIssuesTime;
 };
 
-// Create and export the model with correct typing
 const User = model<IUser, IUserModel>('User', userSchema);
 export default User;

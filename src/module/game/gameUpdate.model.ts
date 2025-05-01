@@ -4,15 +4,15 @@ import { IPendingGameUpdate } from './game.interface';
 
 const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
   {
-    gameId: {
-      type: Schema.Types.ObjectId,
-      required: [true, 'Game ID is required'],
-      ref: 'Games',
-    },
     userId: {
       type: String,
       required: [true, 'User ID is required'],
       ref: 'User',
+    },
+    gameId: {
+      type: String,
+      required: [false, 'Game ID is not required'],
+      ref: 'Games',
     },
     game_title: {
       type: String,
@@ -28,7 +28,7 @@ const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
       required: false,
     },
     price: {
-      type: Number,
+      type: String,
       required: false,
     },
     steam_link: {

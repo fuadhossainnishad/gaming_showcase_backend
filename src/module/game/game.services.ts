@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import { RequestWithFiles } from '../../types/express';
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import games from './game.model';
@@ -10,31 +10,48 @@ import { USER_ROLE, UserRole } from '../user/user.constant';
 import PendingGameUpdate from './gameUpdate.model';
 import { GameInterface, IPendingGameUpdate } from './game.interface';
 import mongoose from 'mongoose';
-
-interface RequestWithFiles extends Request {
-  files: Express.Multer.File[];
-}
+import MediaUrl from '../../utility/game.media';
 
 const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
-  const files = req.files; // Type: Express.Multer.File[] | undefined
-  const payload = req.body as Omit<
-    GameInterface,
-    'userId' | 'comments' | 'totalComments' | 'shares' | 'totalShare' | 'isApproved' | 'isDelete'
-  >;
+  console.log('createNewGameIntoDb - Request Details:', {
+    body: req.body,
+    files: req.files,
+    userId,
+    headers: req.headers,
+  });
 
-  const mediaFiles = files?.map((file) => file.path) || [];
+  const payload = req.body;
+
+  if (!payload) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Request body is missing', '');
+  }
+  if (!payload.game_title) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Game title is required', '');
+  }
+  if (!payload.category) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Category is required', '');
+  }
+
+  const files = Array.isArray(req.files)
+    ? req.files
+    : req.files && 'media_files' in req.files
+    ? req.files['media_files']
+    : undefined;
+
+  const mediaFiles = files?.map((file) => MediaUrl.gameMediaUrl(file.path, userId)) || [];
 
   const gameData: GameInterface = {
     userId: userId,
+    gameId: payload.gameId,
     game_title: payload.game_title,
     category: payload.category,
-    description: payload.description,
-    price: parseFloat(payload.price as any),
-    steam_link: payload.steam_link,
-    x_link: payload.x_link,
-    linkedin_link: payload.linkedin_link,
-    reddit_link: payload.reddit_link,
-    instagram_link: payload.instagram_link,
+    description: payload.description || '',
+    price: payload.price,
+    steam_link: payload.steam_link || '',
+    x_link: payload.x_link || '',
+    linkedin_link: payload.linkedin_link || '',
+    reddit_link: payload.reddit_link || '',
+    instagram_link: payload.instagram_link || '',
     media_files: mediaFiles,
     comments: [],
     totalComments: 0,
@@ -285,33 +302,49 @@ const getTopGameOfWeek = async (query: TopGameQuery) => {
   }
 };
 
-const updateGameIntoDb = async (userId: string, payload: TGameUpdate, files?: Express.Multer.File[]) => {
+const updateGameIntoDb = async (
+  userId: string,
+  payload: TGameUpdate,
+  files?: Express.Multer.File[],
+) => {
   const { gameId, ...updateData } = payload;
 
-  if (!mongoose.Types.ObjectId.isValid(gameId)) {
+  if (!mongoose.isValidObjectId(gameId)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid game ID', '');
   }
 
-  const game = await games.findById(gameId).where({ isDeleted: { $ne: true } });
+  const game = await games.findById(gameId).where({ isDelete: { $ne: true } });
   if (!game) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Game not found or is deleted', '');
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Game not found or is deleted',
+      '',
+    );
   }
 
   if (game.userId.toString() !== userId) {
-    throw new AppError(httpStatus.FORBIDDEN, 'You can only update your own games', '');
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'You can only update your own games',
+      '',
+    );
   }
 
   const existingUpdate = await PendingGameUpdate.findOne({
-    gameId: new mongoose.Types.ObjectId(gameId),
+    gameId: gameId,
     userId,
     status: 'pending',
   });
   if (existingUpdate) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'You already have a pending game update', '');
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'You already have a pending game update',
+      '',
+    );
   }
 
   const pendingUpdateData: Partial<IPendingGameUpdate> = {
-    gameId: new mongoose.Types.ObjectId(gameId),
+    gameId: gameId,
     userId,
     game_title: updateData.game_title,
     category: updateData.category,
@@ -322,7 +355,9 @@ const updateGameIntoDb = async (userId: string, payload: TGameUpdate, files?: Ex
     linkedin_link: updateData.linkedin_link,
     reddit_link: updateData.reddit_link,
     instagram_link: updateData.instagram_link,
-    media_files: files ? files.map((file) => file.path) : updateData.media_files,
+    media_files: files
+      ? files.map((file) => file.path)
+      : updateData.media_files,
     status: 'pending',
     submittedAt: new Date(),
   };
@@ -338,7 +373,7 @@ const GameServices = {
   userShare,
   getTopGameOfDay,
   getTopGameOfWeek,
-  updateGameIntoDb
+  updateGameIntoDb,
 };
 
 export default GameServices;

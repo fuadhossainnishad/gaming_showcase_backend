@@ -35,16 +35,16 @@ const profileStorage = multer.diskStorage({
 
 export const uploadProfile = multer({
   storage: profileStorage,
-  fileFilter(req, file, cb: multer.FileFilterCallback) {
-    const fileTypes = /jpeg|jpg|png/;
-    const fileExt = fileTypes.test(path.extname(file.originalname).toLowerCase());
-    const fileMimeType = fileTypes.test(file.mimetype);
-    if (fileExt && fileMimeType) {
-      cb(null, true);
-    } else {
-      console.error('Profile Multer - Invalid file type:', file.originalname);
-      cb(new AppError(httpStatus.BAD_REQUEST, 'Only JPEG, JPG, or PNG images are allowed', '') as any, false);
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  // fileFilter(req, file, cb: multer.FileFilterCallback) {
+  //   const fileTypes = /jpeg|jpg|png/;
+  //   const fileExt = fileTypes.test(path.extname(file.originalname).toLowerCase());
+  //   const fileMimeType = fileTypes.test(file.mimetype);
+  //   if (fileExt && fileMimeType) {
+  //     cb(null, true);
+  //   } else {
+  //     console.error('Profile Multer - Invalid file type:', file.originalname);
+  //     cb(new AppError(httpStatus.BAD_REQUEST, 'Only JPEG, JPG, or PNG images are allowed', '') as any, false);
+  //   }
+  // },
+  // limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });

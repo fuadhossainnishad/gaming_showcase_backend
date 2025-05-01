@@ -11,6 +11,7 @@ export interface ShareInterface {
 
 export interface GameInterface {
   userId: string;
+  gameId: string;
   game_title: string;
   category:
     | 'Action'
@@ -23,7 +24,7 @@ export interface GameInterface {
     | 'Racing'
     | 'Shooter';
   description: string;
-  price: number;
+  price: string;
   steam_link: string;
   x_link: string;
   linkedin_link: string;
@@ -39,12 +40,12 @@ export interface GameInterface {
 }
 
 export interface IPendingGameUpdate {
-  gameId: import('mongoose').Types.ObjectId;
+  gameId: string;
   userId: string;
   game_title?: string;
   category?: string;
   description?: string;
-  price?: number;
+  price?: string;
   steam_link?: string;
   x_link?: string;
   linkedin_link?: string;
@@ -58,6 +59,5 @@ export interface IPendingGameUpdate {
 }
 
 export interface CreateGameModel extends Model<GameInterface> {
-  // eslint-disable-next-line no-unused-vars
   isExistGame(id: string): Promise<GameInterface>;
 }

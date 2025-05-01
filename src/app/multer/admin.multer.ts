@@ -14,8 +14,18 @@ const adminStorage = multer.diskStorage({
       console.log('Admin Multer - Directory created successfully:', uploadDir);
       cb(null, uploadDir);
     } catch (error: any) {
-      console.error('Admin Multer - Failed to create directory:', error.message);
-      cb(new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to create admin upload directory: ${error.message}`, ''), '');
+      console.error(
+        'Admin Multer - Failed to create directory:',
+        error.message,
+      );
+      cb(
+        new AppError(
+          httpStatus.INTERNAL_SERVER_ERROR,
+          `Failed to create admin upload directory: ${error.message}`,
+          '',
+        ),
+        '',
+      );
     }
   },
   filename: (req, file, cb) => {
@@ -27,16 +37,16 @@ const adminStorage = multer.diskStorage({
 
 export const uploadAdmin = multer({
   storage: adminStorage,
-  fileFilter(req, file, cb: multer.FileFilterCallback) {
-    const fileTypes = /jpeg|jpg|png/;
-    const fileExt = fileTypes.test(path.extname(file.originalname).toLowerCase());
-    const fileMimeType = fileTypes.test(file.mimetype);
-    if (fileExt && fileMimeType) {
-      cb(null, true);
-    } else {
-      console.error('Admin Multer - Invalid file type:', file.originalname);
-      cb(new AppError(httpStatus.BAD_REQUEST, 'Only JPEG, JPG, or PNG files are allowed', '') as any, false);
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 },
+  // fileFilter(req, file, cb: multer.FileFilterCallback) {
+  //   const fileTypes = /jpeg|jpg|png/;
+  //   const fileExt = fileTypes.test(path.extname(file.originalname).toLowerCase());
+  //   const fileMimeType = fileTypes.test(file.mimetype);
+  //   if (fileExt && fileMimeType) {
+  //     cb(null, true);
+  //   } else {
+  //     console.error('Admin Multer - Invalid file type:', file.originalname);
+  //     cb(new AppError(httpStatus.BAD_REQUEST, 'Only JPEG, JPG, or PNG files are allowed', '') as any, false);
+  //   }
+  // },
+  // limits: { fileSize: 5 * 1024 * 1024 },
 });

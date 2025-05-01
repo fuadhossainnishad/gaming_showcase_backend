@@ -1,25 +1,25 @@
 import express, { NextFunction, Request, Response } from 'express';
 import validationRequest from '../../middleware/validationRequest';
 import GameValidationSchema from './game.zod.validation';
-import GameController from './game.controller';
 import auth from '../../middleware/auth';
 import { USER_ROLE } from '../user/user.constant';
-import { upload } from '../../utility/uplodeFile';
+import { uploadGames } from '../../app/multer/game.multer';
+import GameController from './game.controller';
 
 const router = express.Router();
 
 router.post(
   '/upload_game',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  upload.array('media_files', 5),
+  uploadGames.array('media_files', 5),
   validationRequest(GameValidationSchema.GameSchema),
   GameController.createNewGame,
 );
 
-router.post(
+router.patch(
   '/update_game',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  upload.array('media_files'),
+  uploadGames.array('media_files'),
   validationRequest(GameValidationSchema.GameUpdateSchema),
   GameController.updateGame,
 );

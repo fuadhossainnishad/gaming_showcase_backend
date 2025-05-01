@@ -27,7 +27,6 @@ export interface IPendingUserUpdate {
   reviewedAt?: Date;
 }
 
-// Define the static methods interface
 export interface IUserModel extends Model<IUser> {
   isPasswordMatched(
     plainTextPassword: string,

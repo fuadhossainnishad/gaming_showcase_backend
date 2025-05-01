@@ -8,6 +8,7 @@ import { updateUserProfileType } from './user.constant';
 import config from '../../app/config';
 import AppError from '../../app/error/AppError';
 import PendingUserUpdate from './userUpdateProfile';
+import MediaUrl from '../../utility/game.media';
 
 const createUserIntoDb = async (payload: IUser) => {
   try {
@@ -120,7 +121,7 @@ const submitProfileUpdate = async (
     name: payload.name,
     bio: payload.bio,
     links: payload.links,
-    photo: payload.photo,
+    photo: MediaUrl.profileMediaUrl(payload.photo as string, userId),
     status: 'pending',
     submittedAt: new Date(),
   };
