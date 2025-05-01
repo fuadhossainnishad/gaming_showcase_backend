@@ -1,15 +1,17 @@
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import games from '../game/game.model';
-import { approveGameType, TApproveProfileUpdate } from './admin.types';
+import { approveGameType, TApproveGameUpdate, TApproveProfileUpdate } from './admin.types';
 import PendingUserUpdate from '../user/userUpdateProfile';
 import { IUser } from '../user/user.interface';
 import User from '../user/user.model';
+import PendingGameUpdate from '../game/gameUpdate.model';
+import { IPendingGameUpdate } from '../game/game.interface';
 
 const approveGame = async (payload: approveGameType) => {
-  const { id } = payload;
+  const { gameId } = payload;
 
-  const game = await games.findById(id).where({ isDelete: { $ne: true } });
+  const game = await games.findById(gameId).where({ isDelete: { $ne: true } });
 
   if (!game) {
     throw new AppError(
@@ -21,7 +23,7 @@ const approveGame = async (payload: approveGameType) => {
 
   const updatedGame = await games
     .findByIdAndUpdate(
-      id,
+      gameId,
       { $set: { isApproved: true } },
       { new: true, runValidators: true },
     )
@@ -32,6 +34,91 @@ const approveGame = async (payload: approveGameType) => {
   }
 
   return updatedGame;
+};
+
+const getPendingGameUpdates = async () => {
+  const updates = await PendingGameUpdate.find({ status: 'pending' }).populate(
+    'userId',
+    'email name',
+  );
+  return updates;
+};
+
+const approveGameUpdate = async (
+  payload: TApproveGameUpdate,
+) => {
+  const pendingUpdate = await PendingGameUpdate.findById(payload.updateId);
+  if (!pendingUpdate) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Pending game update not found', '');
+  }
+
+  if (pendingUpdate.status !== 'pending') {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Game update is not in pending status',
+      '',
+    );
+  }
+
+  const game = await games.findById(pendingUpdate.gameId).where({ isDelete: { $ne: true } });
+  if (!game) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
+  }
+
+  const updateFields: Partial<IPendingGameUpdate> = {};
+  if (pendingUpdate.game_title) updateFields.game_title = pendingUpdate.game_title;
+  if (pendingUpdate.category) updateFields.category = pendingUpdate.category;
+  if (pendingUpdate.description) updateFields.description = pendingUpdate.description;
+  if (pendingUpdate.price) updateFields.price = pendingUpdate.price;
+  if (pendingUpdate.steam_link) updateFields.steam_link = pendingUpdate.steam_link;
+  if (pendingUpdate.x_link) updateFields.x_link = pendingUpdate.x_link;
+  if (pendingUpdate.linkedin_link) updateFields.linkedin_link = pendingUpdate.linkedin_link;
+  if (pendingUpdate.reddit_link) updateFields.reddit_link = pendingUpdate.reddit_link;
+  if (pendingUpdate.instagram_link) updateFields.instagram_link = pendingUpdate.instagram_link;
+  if (pendingUpdate.media_files) updateFields.media_files = pendingUpdate.media_files;
+
+  const updatedGame = await games.findByIdAndUpdate(
+    pendingUpdate.gameId,
+    updateFields,
+    { new: true, runValidators: true },
+  ).where({ isDelete: { $ne: true } });
+
+  if (!updatedGame) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Failed to apply game update',
+      '',
+    );
+  }
+
+  await PendingGameUpdate.findByIdAndUpdate(payload.updateId, {
+    status: 'approved',
+    reviewedAt: new Date(),
+  });
+
+  return updatedGame;
+};
+
+const rejectGameUpdate = async (updateId: string) => {
+  const pendingUpdate = await PendingGameUpdate.findById(updateId);
+  if (!pendingUpdate) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Pending game update not found', '');
+  }
+
+  if (pendingUpdate.status !== 'pending') {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Game update is not in pending status',
+      '',
+    );
+  }
+
+  await PendingGameUpdate.findByIdAndUpdate(updateId, {
+    status: 'rejected',
+    reviewedAt: new Date(),
+  });
+
+  return { message: 'Game update rejected successfully' };
 };
 
 const getPendingProfileUpdates = async () => {
@@ -124,13 +211,53 @@ const rejectProfileUpdate = async (adminId: string, updateId: string) => {
 
 const getDashboardStats = async () => {
   const totalUsers = await User.countDocuments({ isDeleted: false });
-  const totalGames = await games.countDocuments({ isDeleted: false });
+  const totalGames = await games.countDocuments({ isDelete: false });
 
-  const userGames = await games.aggregate([
+  const userWiseGames = await User.aggregate([
     { $match: { isDeleted: false } },
     {
+      $lookup: {
+        from: 'games',
+        localField: 'userId',
+        foreignField: 'userId',
+        as: 'games',
+      },
+    },
+    {
+      $project: {
+        userId: 1,
+        name: 1,
+        email: 1,
+        games: {
+          $filter: {
+            input: '$games',
+            as: 'game',
+            cond: { $eq: ['$$game.isDelete', false] },
+          },
+        },
+      },
+    },
+    {
+      $sort: { userId: 1 },
+    },
+  ]).project({
+    userId: 1,
+    name: 1,
+    email: 1,
+    'games._id': 1,
+    'games.gameId': 1,
+    'games.game_title': 1,
+    'games.category': 1,
+    'games.description': 1,
+    'games.price': 1,
+    'games.isApproved': 1,
+  });
+
+  const userGames = await games.aggregate([
+    { $match: { isDelete: false } },
+    {
       $group: {
-        _id: '$createdBy',
+        _id: '$userId',
         gameCount: { $sum: 1 },
       },
     },
@@ -138,14 +265,14 @@ const getDashboardStats = async () => {
       $lookup: {
         from: 'users',
         localField: '_id',
-        foreignField: '_id',
+        foreignField: 'userId',
         as: 'user',
       },
     },
     { $unwind: '$user' },
     {
       $project: {
-        userId: '$user._id',
+        userId: '$user.userId',
         userName: '$user.name',
         userEmail: '$user.email',
         gameCount: 1,
@@ -153,15 +280,34 @@ const getDashboardStats = async () => {
     },
   ]);
 
+  const allUsers = await User
+    .find({ isDeleted: false })
+    .select('-password')
+    .lean();
+
+  const allGames = await games
+    .find({ isDelete: false })
+    .lean();
+
+  const approvedGames = await games
+    .find({ isApproved: true })
+    .lean();
+
   return {
     totalUsers,
     totalGames,
-    userGames,
+    userWiseGames,
+    allUsers,
+    allGames,
+    approvedGames
   };
 };
 
 const AdminServices = {
   approveGame,
+  getPendingGameUpdates,
+  approveGameUpdate,
+  rejectGameUpdate,
   getPendingProfileUpdates,
   approveProfileUpdate,
   rejectProfileUpdate,

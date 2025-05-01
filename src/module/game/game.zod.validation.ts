@@ -78,6 +78,7 @@ const TopGameQuerySchema = z.object({
 const GameUpdateSchema = z.object({
   body: z
     .object({
+      userId: z.string().optional(),
       gameId: z.string({ required_error: 'Game ID is required' }),
       game_title: z
         .string()

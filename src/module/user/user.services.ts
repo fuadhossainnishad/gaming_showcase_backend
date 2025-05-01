@@ -69,7 +69,7 @@ const updateUserProfileIntoDb = async (
     // }
 
     const updatedUser = await User.findOneAndUpdate(
-      { _id, isDeleted: { $ne: true } },
+      { userId, isDeleted: { $ne: true } },
       { $set: updateFields },
       { new: true, runValidators: true, session },
     ).select('-password');

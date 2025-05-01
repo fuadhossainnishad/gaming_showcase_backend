@@ -12,6 +12,7 @@ export type TopGameQuery = {
 };
 
 export type TGameUpdate = {
+  userId: string
   gameId: string;
   game_title?: string;
   category?: string;

@@ -35,8 +35,8 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   const files = Array.isArray(req.files)
     ? req.files
     : req.files && 'media_files' in req.files
-    ? req.files['media_files']
-    : undefined;
+      ? req.files['media_files']
+      : undefined;
 
   const mediaFiles = files?.map((file) => MediaUrl.gameMediaUrl(file.path, userId)) || [];
 
@@ -303,11 +303,19 @@ const getTopGameOfWeek = async (query: TopGameQuery) => {
 };
 
 const updateGameIntoDb = async (
-  userId: string,
+  _id: string,
   payload: TGameUpdate,
   files?: Express.Multer.File[],
 ) => {
-  const { gameId, ...updateData } = payload;
+  const { gameId, userId, ...updateData } = payload;
+
+  if (!userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Provided user ID does not match authenticated user',
+      '',
+    );
+  }
 
   if (!mongoose.isValidObjectId(gameId)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid game ID', '');
@@ -322,7 +330,7 @@ const updateGameIntoDb = async (
     );
   }
 
-  if (game.userId.toString() !== userId) {
+  if (game.userId !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'You can only update your own games',

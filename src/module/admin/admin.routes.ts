@@ -21,6 +21,26 @@ router.post(
 );
 
 router.get(
+  '/pending-game-updates',
+  auth(USER_ROLE.ADMIN),
+  AdminController.getPendingGameUpdates,
+);
+
+router.post(
+  '/approve-game-update',
+  auth(USER_ROLE.ADMIN),
+  validationRequest(AdminValidationSchema.approveGameUpdateValidation),
+  AdminController.approveGameUpdateByAdmin,
+);
+
+router.delete(
+  '/reject-game-update',
+  auth(USER_ROLE.ADMIN),
+  validationRequest(AdminValidationSchema.rejectGameUpdateValidation),
+  AdminController.rejectGameUpdateByAdmin,
+);
+
+router.get(
   '/pending-profile-updates',
   auth(USER_ROLE.ADMIN),
   AdminController.getPendingProfileUpdates,
@@ -33,7 +53,7 @@ router.post(
   AdminController.approveProfileUpdateByAdmin,
 );
 
-router.post(
+router.delete(
   '/reject-profile-update',
   auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.rejectProfileUpdateValidation),

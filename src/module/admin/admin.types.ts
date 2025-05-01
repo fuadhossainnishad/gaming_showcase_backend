@@ -1,6 +1,10 @@
+export type TApproveGameUpdate = {
+    updateId: string;
+};
+
 export type approveGameType = {
-    id:string
+    gameId: string
 }
 export type TApproveProfileUpdate = {
     updateId: string;
-  };
+};
