@@ -6,24 +6,54 @@ import AppError from '../../app/error/AppError';
 
 const profileStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const userId = req.body.userId;
-    console.log('Profile Multer - userId:', userId, 'req.body:', req.body, 'req.user:', req.user);
+    const userId = req.user?.id;
+    console.log(
+      'Profile Multer - userId:',
+      userId,
+      'req.body:',
+      req.body,
+      'req.user:',
+      req.user,
+    );
 
     if (!userId) {
       console.error('Profile Multer - Error: userId is required');
-      return cb(new AppError(httpStatus.BAD_REQUEST, 'userId is required for file upload', ''), '');
+      return cb(
+        new AppError(
+          httpStatus.BAD_REQUEST,
+          'userId is required for file upload',
+          '',
+        ),
+        '',
+      );
     }
 
-    const uploadDir = path.join(process.cwd(), `src/uploads/${userId}/profile/`);
+    const uploadDir = path.join(
+      process.cwd(),
+      `src/uploads/${userId}/profile/`,
+    );
     console.log('Profile Multer - Attempting to create directory:', uploadDir);
 
     try {
       fs.mkdirSync(uploadDir, { recursive: true });
-      console.log('Profile Multer - Directory created successfully:', uploadDir);
+      console.log(
+        'Profile Multer - Directory created successfully:',
+        uploadDir,
+      );
       cb(null, uploadDir);
     } catch (error: any) {
-      console.error('Profile Multer - Failed to create directory:', error.message);
-      cb(new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to create profile upload directory: ${error.message}`, ''), '');
+      console.error(
+        'Profile Multer - Failed to create directory:',
+        error.message,
+      );
+      cb(
+        new AppError(
+          httpStatus.INTERNAL_SERVER_ERROR,
+          `Failed to create profile upload directory: ${error.message}`,
+          '',
+        ),
+        '',
+      );
     }
   },
   filename: (req, file, cb) => {

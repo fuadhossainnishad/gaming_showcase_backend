@@ -1,7 +1,11 @@
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import games from '../game/game.model';
-import { approveGameType, TApproveGameUpdate, TApproveProfileUpdate } from './admin.types';
+import {
+  approveGameType,
+  TApproveGameUpdate,
+  TApproveProfileUpdate,
+} from './admin.types';
 import PendingUserUpdate from '../user/userUpdateProfile';
 import { IUser } from '../user/user.interface';
 import User from '../user/user.model';
@@ -44,12 +48,14 @@ const getPendingGameUpdates = async () => {
   return updates;
 };
 
-const approveGameUpdate = async (
-  payload: TApproveGameUpdate,
-) => {
+const approveGameUpdate = async (payload: TApproveGameUpdate) => {
   const pendingUpdate = await PendingGameUpdate.findById(payload.updateId);
   if (!pendingUpdate) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Pending game update not found', '');
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Pending game update not found',
+      '',
+    );
   }
 
   if (pendingUpdate.status !== 'pending') {
@@ -60,35 +66,42 @@ const approveGameUpdate = async (
     );
   }
 
-  const game = await games.findById(pendingUpdate.gameId).where({ isDelete: { $ne: true } });
+  const game = await games
+    .findById(pendingUpdate.gameId)
+    .where({ isDelete: { $ne: true } });
+
   if (!game) {
     throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
   }
 
   const updateFields: Partial<IPendingGameUpdate> = {};
-  if (pendingUpdate.game_title) updateFields.game_title = pendingUpdate.game_title;
+  if (pendingUpdate.game_title)
+    updateFields.game_title = pendingUpdate.game_title;
   if (pendingUpdate.category) updateFields.category = pendingUpdate.category;
-  if (pendingUpdate.description) updateFields.description = pendingUpdate.description;
+  if (pendingUpdate.description)
+    updateFields.description = pendingUpdate.description;
   if (pendingUpdate.price) updateFields.price = pendingUpdate.price;
-  if (pendingUpdate.steam_link) updateFields.steam_link = pendingUpdate.steam_link;
+  if (pendingUpdate.steam_link)
+    updateFields.steam_link = pendingUpdate.steam_link;
   if (pendingUpdate.x_link) updateFields.x_link = pendingUpdate.x_link;
-  if (pendingUpdate.linkedin_link) updateFields.linkedin_link = pendingUpdate.linkedin_link;
-  if (pendingUpdate.reddit_link) updateFields.reddit_link = pendingUpdate.reddit_link;
-  if (pendingUpdate.instagram_link) updateFields.instagram_link = pendingUpdate.instagram_link;
-  if (pendingUpdate.media_files) updateFields.media_files = pendingUpdate.media_files;
+  if (pendingUpdate.linkedin_link)
+    updateFields.linkedin_link = pendingUpdate.linkedin_link;
+  if (pendingUpdate.reddit_link)
+    updateFields.reddit_link = pendingUpdate.reddit_link;
+  if (pendingUpdate.instagram_link)
+    updateFields.instagram_link = pendingUpdate.instagram_link;
+  if (pendingUpdate.media_files)
+    updateFields.media_files = pendingUpdate.media_files;
 
-  const updatedGame = await games.findByIdAndUpdate(
-    pendingUpdate.gameId,
-    updateFields,
-    { new: true, runValidators: true },
-  ).where({ isDelete: { $ne: true } });
+  const updatedGame = await games
+    .findByIdAndUpdate(pendingUpdate.gameId, updateFields, {
+      new: true,
+      runValidators: true,
+    })
+    .where({ isDelete: { $ne: true } });
 
   if (!updatedGame) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      'Failed to apply game update',
-      '',
-    );
+    throw new AppError(httpStatus.NOT_FOUND, 'Failed to apply game update', '');
   }
 
   await PendingGameUpdate.findByIdAndUpdate(payload.updateId, {
@@ -102,7 +115,11 @@ const approveGameUpdate = async (
 const rejectGameUpdate = async (updateId: string) => {
   const pendingUpdate = await PendingGameUpdate.findById(updateId);
   if (!pendingUpdate) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Pending game update not found', '');
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Pending game update not found',
+      '',
+    );
   }
 
   if (pendingUpdate.status !== 'pending') {
@@ -212,6 +229,7 @@ const rejectProfileUpdate = async (adminId: string, updateId: string) => {
 const getDashboardStats = async () => {
   const totalUsers = await User.countDocuments({ isDeleted: false });
   const totalGames = await games.countDocuments({ isDelete: false });
+  const totalUpcomingGames = await games.countDocuments({ isApproved: false });
 
   const userWiseGames = await User.aggregate([
     { $match: { isDeleted: false } },
@@ -280,26 +298,32 @@ const getDashboardStats = async () => {
     },
   ]);
 
-  const allUsers = await User
-    .find({ isDeleted: false })
+  const allUsers = await User.find({ isDeleted: false })
     .select('-password')
     .lean();
 
-  const allGames = await games
-    .find({ isDelete: false })
-    .lean();
+  const allGames = await games.find({ isDelete: false }).lean();
 
-  const approvedGames = await games
-    .find({ isApproved: true })
-    .lean();
+  const approvedGames = await games.find({ isApproved: true }).lean();
+
+  const gameUpdateRequest = await PendingGameUpdate.find({
+    status: 'pending',
+  }).lean();
+
+  const userUpdateRequest = await PendingGameUpdate.find({
+    status: 'pending',
+  }).lean();
 
   return {
     totalUsers,
     totalGames,
+    totalUpcomingGames,
     userWiseGames,
     allUsers,
     allGames,
-    approvedGames
+    approvedGames,
+    gameUpdateRequest,
+    userUpdateRequest,
   };
 };
 

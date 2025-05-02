@@ -3,6 +3,8 @@ import catchAsync from '../../utility/catchAsync';
 import UserServices from './user.services';
 import sendResponse from '../../utility/sendResponse';
 import httpStatus from 'http-status';
+import AppError from '../../app/error/AppError';
+import { IUserUpdate } from './user.interface';
 
 const createUser: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserServices.createUserIntoDb(req.body);
@@ -25,11 +27,30 @@ const findAllUser: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
-  const photoPath = req.file ? req.file.path : undefined;
-  const result = await UserServices.updateUserProfileIntoDb({
-    ...req.body,
-    photo: photoPath,
-  });
+  if (!req.user || !req.user.id) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
+  }
+  // console.log(req.body);
+  console.log(req.user?.id);
+  let links = req.body.links;
+  if (typeof links === 'string') {
+    try {
+      links = JSON.parse(links);
+    } catch {
+      links = undefined;
+    }
+  }
+
+  const payload: IUserUpdate = {
+    name: req.body.name,
+    bio: req.body.bio,
+    links,
+  };
+  const result = await UserServices.updateUserProfileIntoDb(
+    req.user!.id as string,
+    payload,
+    req.file,
+  );
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

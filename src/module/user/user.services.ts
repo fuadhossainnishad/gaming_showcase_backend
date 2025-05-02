@@ -2,7 +2,7 @@ import httpStatus from 'http-status';
 
 import User from './user.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
-import { IPendingUserUpdate, IUser } from './user.interface';
+import { IPendingUserUpdate, IUser, IUserUpdate } from './user.interface';
 import mongoose from 'mongoose';
 import { updateUserProfileType } from './user.constant';
 import config from '../../app/config';
@@ -14,7 +14,7 @@ const createUserIntoDb = async (payload: IUser) => {
   try {
     console.log(payload);
     const createUserBuilder = new User(payload);
-    console.log(createUserBuilder);
+    // console.log(createUserBuilder);
     const result = await createUserBuilder.save();
     return result && { status: true, message: 'successfully create user' };
   } catch (error: any) {
@@ -53,13 +53,29 @@ const findAllUserIntoDb = async (query: Record<string, unknown>) => {
 };
 
 const updateUserProfileIntoDb = async (
-  payload: updateUserProfileType & { _id: string },
+  userId: string,
+  payload: IUserUpdate,
+  file?: Express.Multer.File,
 ) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { _id, userId, password, ...updateFields } = payload;
+    const { ...updateFields } = payload;
+
+    console.log('file:', file?.path);
+
+    console.log('payload: ', payload);
+
+    console.log('userId: ', userId);
+
+    if (!userId) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        'Provided user ID does not match authenticated user',
+        '',
+      );
+    }
 
     // if (password) {
     //   updateFields.password = await bcrypt.hash(
@@ -68,13 +84,15 @@ const updateUserProfileIntoDb = async (
     //   );
     // }
 
-    const updatedUser = await User.findOneAndUpdate(
-      { userId, isDeleted: { $ne: true } },
-      { $set: updateFields },
-      { new: true, runValidators: true, session },
-    ).select('-password');
+    const existingUser = await User.findOne({
+      userId: userId,
+      isDeleted: { $ne: true },
+    });
+    // { $set: updateFields },
+    // { new: true, runValidators: true, session },
+    // ).select('-password');
 
-    if (!updatedUser) {
+    if (!existingUser) {
       throw new AppError(
         httpStatus.NOT_FOUND,
         'User not found or is deleted',
@@ -82,8 +100,34 @@ const updateUserProfileIntoDb = async (
       );
     }
 
+    if (existingUser.userId !== userId) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        'You can only update your own profile',
+        '',
+      );
+    }
+    
+    const photoPath = file
+      ? MediaUrl.profileMediaUrl(file.path, userId)
+      : existingUser.photo;
+    console.log('photoPath:', photoPath);
+
+    const pendingUserUpdateData: Partial<IPendingUserUpdate> = {
+      userId,
+      ...updateFields,
+      photo: photoPath,
+      status: 'pending',
+    };
+
+    const pendingUPdate = await PendingUserUpdate.create(
+      [pendingUserUpdateData],
+      { session },
+    );
+
     await session.commitTransaction();
-    return updatedUser;
+
+    return pendingUPdate;
   } catch (error: any) {
     await session.abortTransaction();
     throw new AppError(

@@ -83,11 +83,10 @@ const rejectUpdateValidation = z.object({
     .strict({ message: 'Only updateId is allowed' }),
 });
 
-
 export const userValidation = {
   userSignUpValidation,
   userSignInValidation,
   userProfileUpdateValidation,
   approveUpdateValidation,
-  rejectUpdateValidation
+  rejectUpdateValidation,
 };

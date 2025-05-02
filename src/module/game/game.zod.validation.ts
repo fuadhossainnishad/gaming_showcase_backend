@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { gameCategory } from './game.constant';
+import { urlPattern } from '../../constants/regex.constants';
 
-const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
 
 const GameSchema = z.object({
   body: z.object({

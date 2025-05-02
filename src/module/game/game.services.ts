@@ -4,7 +4,12 @@ import AppError from '../../app/error/AppError';
 import games from './game.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
 import User from '../user/user.model';
-import { CommentPayload, SharePayload, TGameUpdate, TopGameQuery } from './game.type';
+import {
+  CommentPayload,
+  SharePayload,
+  TGameUpdate,
+  TopGameQuery,
+} from './game.type';
 import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
 import { USER_ROLE, UserRole } from '../user/user.constant';
 import PendingGameUpdate from './gameUpdate.model';
@@ -38,7 +43,8 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
       ? req.files['media_files']
       : undefined;
 
-  const mediaFiles = files?.map((file) => MediaUrl.gameMediaUrl(file.path, userId)) || [];
+  const mediaFiles =
+    files?.map((file) => MediaUrl.gameMediaUrl(file.path, userId)) || [];
 
   const gameData: GameInterface = {
     userId: userId,
@@ -102,6 +108,7 @@ const getAllGameIntoDb = async (
 const userComment = async (payload: CommentPayload, userId: string) => {
   try {
     const { gameId, comment } = payload;
+    // console.log(userId);
 
     const user = await User.findById(userId).where({
       isDeleted: { $ne: true },
@@ -308,6 +315,7 @@ const updateGameIntoDb = async (
   files?: Express.Multer.File[],
 ) => {
   const { gameId, userId, ...updateData } = payload;
+  console.log(payload);
 
   if (!userId) {
     throw new AppError(

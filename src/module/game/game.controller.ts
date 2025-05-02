@@ -1,4 +1,4 @@
-import {  RequestHandlerWithFiles } from '../../types/express';
+import { RequestHandlerWithFiles } from '../../types/express';
 import catchAsync from '../../utility/catchAsync';
 import GameServices from './game.services';
 import httpStatus from 'http-status';
@@ -52,7 +52,13 @@ const getAllGame: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const addComment: RequestHandler = catchAsync(async (req, res) => {
-  const result = await GameServices.userComment(req.body, req.user?._id);
+  // console.log(req.body.body);
+  // console.log(req.user);
+
+  const result = await GameServices.userComment(
+    req.body,
+    req.user?.id as string,
+  );
 
   sendResponse(res, {
     success: true,
@@ -63,7 +69,7 @@ const addComment: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const addShare: RequestHandler = catchAsync(async (req, res) => {
-  const result = await GameServices.userShare(req.body, req.user?._id);
+  const result = await GameServices.userShare(req.body, req.user?.id as string);
 
   sendResponse(res, {
     success: true,
@@ -99,10 +105,14 @@ const updateGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   const files = Array.isArray(req.files)
     ? req.files
     : req.files && 'media_files' in req.files
-    ? req.files['media_files']
-    : undefined;
+      ? req.files['media_files']
+      : undefined;
 
-  const result = await GameServices.updateGameIntoDb(req.user!._id, req.body, files);
+  const result = await GameServices.updateGameIntoDb(
+    req.user!._id,
+    req.body,
+    files,
+  );
 
   sendResponse(res, {
     success: true,

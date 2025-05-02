@@ -6,7 +6,7 @@ export const USER_ROLE = {
 } as const;
 
 export type updateUserProfileType = Partial<
-  Pick<IUser, 'name' | 'userId' | 'bio' | 'links' | 'photo' | 'password'>
+  Pick<IUser, 'name' & 'userId' & 'bio' & 'links' & 'password'>
 >;
 
 export type UserRole = keyof typeof USER_ROLE;

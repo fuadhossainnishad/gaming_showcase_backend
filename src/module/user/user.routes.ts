@@ -4,6 +4,8 @@ import { userValidation } from './user.zod.validation';
 import UserController from './user.controller';
 import { uploadProfile } from '../../app/multer/profile.multer';
 import verifyToken from '../../middleware/verifyToken';
+import auth from '../../middleware/auth';
+import { USER_ROLE } from './user.constant';
 
 const router = express.Router();
 
@@ -14,10 +16,12 @@ router.post(
 );
 
 router.get('/find_all_users', UserController.findAllUser);
-router.post(
+
+router.patch(
   '/update_profile',
-  validationRequest(userValidation.userProfileUpdateValidation),
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   uploadProfile.single('photo'),
+  validationRequest(userValidation.userProfileUpdateValidation),
   UserController.updateProfileUser,
 );
 router.post(

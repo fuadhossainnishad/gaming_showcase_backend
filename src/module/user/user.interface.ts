@@ -15,6 +15,18 @@ export interface IUser {
   isDeleted?: boolean;
 }
 
+export interface IUserUpdate {
+  id?: string;
+  name?: string;
+  email?: string;
+  bio?: string;
+  links?: string[];
+  photo?: string;
+  approvedUpdate?: boolean;
+  uploadedGame?: string[];
+  isDeleted?: boolean;
+}
+
 export interface IPendingUserUpdate {
   userId: string;
   name?: string;
