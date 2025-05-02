@@ -12,7 +12,7 @@ const userSignUpValidation = z.object({
       .string({ required_error: 'Name is required' })
       .min(1, 'Name is required'),
     email: z.string({ required_error: 'Email is required' }).email(),
-    role: z.enum([USER_ROLE.ADMIN, USER_ROLE.USER]).default(USER_ROLE.USER),
+    // role: z.enum([USER_ROLE.ADMIN, USER_ROLE.USER]),
     password: z
       .string({ required_error: 'Password is required' })
       .min(8, 'minimum password length is 8')

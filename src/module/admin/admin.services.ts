@@ -11,6 +11,79 @@ import { IUser } from '../user/user.interface';
 import User from '../user/user.model';
 import PendingGameUpdate from '../game/gameUpdate.model';
 import { IPendingGameUpdate } from '../game/game.interface';
+import { USER_ROLE } from '../user/user.constant';
+import { TAuth } from '../auth/auth.constant';
+import { jwtHelpers } from '../../app/jwtHalpers/jwtHalpers';
+import config from '../../app/config';
+
+const createAdminIntoDb = async (payload: IUser) => {
+  try {
+    console.log(payload);
+    const { name, email, password } = payload;
+    const role = USER_ROLE.ADMIN;
+    const isExist = await User.findOne({
+      email,
+      role,
+      isDeleted: { $ne: true },
+    });
+    if (isExist) {
+      throw new AppError(httpStatus.FORBIDDEN, 'Admin already exist', '');
+    }
+    const createAdminBuilder = new User(payload);
+    console.log(createAdminBuilder);
+    const result = await createAdminBuilder.save();
+    return result && { status: true, message: 'successfully create new admin' };
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.SERVICE_UNAVAILABLE,
+      ' createUserIntoDb server unavailable',
+      error.message,
+    );
+  }
+};
+
+const loginAdminIntoDb = async (payload: TAuth) => {
+  const isAdminExist = await User.findOne(
+    { email: payload.email },
+    { password: 1, _id: 1, email: 1, role: 1 },
+  );
+
+  if (!isAdminExist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Admin not found', '');
+  }
+
+  const isPasswordValid = await User.isPasswordMatched(
+    payload.password,
+    isAdminExist.password,
+  );
+
+  if (!isPasswordValid) {
+    throw new AppError(httpStatus.FORBIDDEN, 'This Password Not Matched', '');
+  }
+
+  const jwtPayload = {
+    id: isAdminExist.id,
+    role: isAdminExist.role,
+    email: isAdminExist.email,
+  };
+
+  const accessToken = jwtHelpers.generateToken(
+    jwtPayload,
+    config.admin_jwt_access_secret as string,
+    config.expires_in as string,
+  );
+
+  const refreshToken = jwtHelpers.generateToken(
+    jwtPayload,
+    config.jwt_refresh_secret as string,
+    config.refresh_expires_in as string,
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
 
 const approveGame = async (payload: approveGameType) => {
   const { gameId } = payload;
@@ -328,6 +401,8 @@ const getDashboardStats = async () => {
 };
 
 const AdminServices = {
+  createAdminIntoDb,
+  loginAdminIntoDb,
   approveGame,
   getPendingGameUpdates,
   approveGameUpdate,

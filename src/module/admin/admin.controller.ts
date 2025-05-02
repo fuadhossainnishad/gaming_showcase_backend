@@ -3,6 +3,38 @@ import httpStatus from 'http-status';
 import catchAsync from '../../utility/catchAsync';
 import AdminServices from './admin.services';
 import sendResponse from '../../utility/sendResponse';
+import UserServices from '../user/user.services';
+import AuthServices from '../auth/auth.services';
+import config from '../../app/config';
+
+const createAdmin: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AdminServices.createAdminIntoDb(req.body);
+  console.log(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: 'successfully create admin',
+    data: result,
+  });
+});
+
+const loginAdmin: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AdminServices.loginAdminIntoDb(req.body);
+
+  const { refreshToken, accessToken } = result;
+  res.cookie('refreshToken', refreshToken, {
+    secure: config.NODE_ENV === 'production',
+    httpOnly: true,
+  });
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully Login',
+    data: {
+      accessToken,
+    },
+  });
+});
 
 const approveGameByAdmin: RequestHandler = catchAsync(async (req, res) => {
   const result = await AdminServices.approveGame(req.body);
@@ -25,15 +57,17 @@ const getPendingGameUpdates: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
-const approveGameUpdateByAdmin: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AdminServices.approveGameUpdate(req.body);
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Game update approved successfully',
-    data: result,
-  });
-});
+const approveGameUpdateByAdmin: RequestHandler = catchAsync(
+  async (req, res) => {
+    const result = await AdminServices.approveGameUpdate(req.body);
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Game update approved successfully',
+      data: result,
+    });
+  },
+);
 
 const rejectGameUpdateByAdmin: RequestHandler = catchAsync(async (req, res) => {
   const result = await AdminServices.rejectGameUpdate(req.body.updateId);
@@ -45,35 +79,47 @@ const rejectGameUpdateByAdmin: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
-const getPendingProfileUpdates: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AdminServices.getPendingProfileUpdates();
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Pending profile updates retrieved successfully',
-    data: result,
-  });
-});
+const getPendingProfileUpdates: RequestHandler = catchAsync(
+  async (req, res) => {
+    const result = await AdminServices.getPendingProfileUpdates();
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Pending profile updates retrieved successfully',
+      data: result,
+    });
+  },
+);
 
-const approveProfileUpdateByAdmin: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AdminServices.approveProfileUpdate(req.user!.userId, req.body);
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Profile update approved successfully',
-    data: result,
-  });
-});
+const approveProfileUpdateByAdmin: RequestHandler = catchAsync(
+  async (req, res) => {
+    const result = await AdminServices.approveProfileUpdate(
+      req.user!.userId,
+      req.body,
+    );
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Profile update approved successfully',
+      data: result,
+    });
+  },
+);
 
-const rejectProfileUpdateByAdmin: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AdminServices.rejectProfileUpdate(req.user!.serId, req.body.updateId);
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Profile update rejected successfully',
-    data: result,
-  });
-});
+const rejectProfileUpdateByAdmin: RequestHandler = catchAsync(
+  async (req, res) => {
+    const result = await AdminServices.rejectProfileUpdate(
+      req.user!.serId,
+      req.body.updateId,
+    );
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Profile update rejected successfully',
+      data: result,
+    });
+  },
+);
 
 const getDashboardStats: RequestHandler = catchAsync(async (req, res) => {
   const result = await AdminServices.getDashboardStats();
@@ -86,6 +132,8 @@ const getDashboardStats: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const AdminController = {
+  createAdmin,
+  loginAdmin,
   approveGameByAdmin,
   getPendingGameUpdates,
   approveGameUpdateByAdmin,
@@ -93,7 +141,7 @@ const AdminController = {
   getPendingProfileUpdates,
   approveProfileUpdateByAdmin,
   rejectProfileUpdateByAdmin,
-  getDashboardStats
+  getDashboardStats,
 };
 
 export default AdminController;

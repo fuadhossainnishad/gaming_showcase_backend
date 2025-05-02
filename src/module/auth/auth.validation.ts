@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { emailRegex, passwordRegex } from '../../constants/regex.constants';
+import { USER_ROLE } from '../user/user.constant';
 
 const userSignInValidation = z.object({
   body: z.object({

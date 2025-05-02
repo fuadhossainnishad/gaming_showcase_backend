@@ -4,7 +4,7 @@ import User from './user.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
 import { IPendingUserUpdate, IUser, IUserUpdate } from './user.interface';
 import mongoose from 'mongoose';
-import { updateUserProfileType } from './user.constant';
+import { updateUserProfileType, USER_ROLE } from './user.constant';
 import config from '../../app/config';
 import AppError from '../../app/error/AppError';
 import PendingUserUpdate from './userUpdateProfile';
@@ -13,10 +13,20 @@ import MediaUrl from '../../utility/game.media';
 const createUserIntoDb = async (payload: IUser) => {
   try {
     console.log(payload);
+    const { name, email, password } = payload;
+    const role = USER_ROLE.USER;
+    const isExist = await User.findOne({
+      email,
+      role,
+      isDeleted: { $ne: true },
+    });
+    if (isExist) {
+      throw new AppError(httpStatus.FORBIDDEN, 'User already exist', '');
+    }
     const createUserBuilder = new User(payload);
     // console.log(createUserBuilder);
     const result = await createUserBuilder.save();
-    return result && { status: true, message: 'successfully create user' };
+    return result && { status: true, message: 'successfully create new user' };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
@@ -28,12 +38,8 @@ const createUserIntoDb = async (payload: IUser) => {
 
 const findAllUserIntoDb = async (query: Record<string, unknown>) => {
   try {
-    const allUserQuery = new QueryBuilder(
-      User.find(),
-
-      query,
-    )
-      .search(['name', 'email'])
+    const allUserQuery = new QueryBuilder(User.find(), query)
+      .search(['email'])
       .filter()
       .sort()
       .pagination()
@@ -107,7 +113,7 @@ const updateUserProfileIntoDb = async (
         '',
       );
     }
-    
+
     const photoPath = file
       ? MediaUrl.profileMediaUrl(file.path, userId)
       : existingUser.photo;

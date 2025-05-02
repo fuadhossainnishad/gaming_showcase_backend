@@ -8,6 +8,7 @@ import { IUserUpdate } from './user.interface';
 
 const createUser: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserServices.createUserIntoDb(req.body);
+  console.log(req.body)
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,

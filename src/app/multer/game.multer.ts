@@ -6,7 +6,6 @@ import AppError from '../../app/error/AppError';
 
 const gameStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    // Log request details
     console.log('Game Multer - Request Details:', {
       userId: req.body.userId,
       user: req.user,

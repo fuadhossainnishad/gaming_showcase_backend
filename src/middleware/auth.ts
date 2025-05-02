@@ -22,21 +22,21 @@ const auth = (...requireRoles: UserRole[]) => {
       ? authHeader.split(' ')[1]
       : authHeader;
 
-    if (token === config.admin_jwt_access_secret) {
-      const adminRole = USER_ROLE.ADMIN;
+    // if (token === config.admin_jwt_access_secret) {
+    //   const adminRole = USER_ROLE.ADMIN;
 
-      if (requireRoles.length && !requireRoles.includes(adminRole)) {
-        throw new AppError(httpStatus.FORBIDDEN, 'Access denied for admin', '');
-      }
+    //   if (requireRoles.length && !requireRoles.includes(adminRole)) {
+    //     throw new AppError(httpStatus.FORBIDDEN, 'Access denied for admin', '');
+    //   }
 
-      const adminPayload: AdminPayload = {
-        id: 'Admin',
-        role: adminRole,
-      };
+    //   const adminPayload: AdminPayload = {
+    //     id: 'Admin',
+    //     role: adminRole,
+    //   };
 
-      req.user = adminPayload;
-      return next();
-    }
+    //   req.user = adminPayload;
+    //   return next();
+    // }
 
     let decoded: UserPayload;
     try {

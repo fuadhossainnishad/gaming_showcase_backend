@@ -5,13 +5,25 @@ import AdminValidationSchema from './admin.validation';
 import AdminController from './admin.controller';
 import auth from '../../middleware/auth';
 import { USER_ROLE } from '../user/user.constant';
+import AuthValidationSchema from '../auth/auth.validation';
+import AuthController from '../auth/auth.controller';
+import { userValidation } from '../user/user.zod.validation';
 
 const router = express.Router();
 
-router.get('/getAllGame',
-  auth(USER_ROLE.ADMIN),
-  GameController.getAllGame
+router.post(
+  '/signup',
+  validationRequest(userValidation.userSignUpValidation),
+  AdminController.createAdmin,
 );
+
+router.post(
+  '/login',
+  validationRequest(AuthValidationSchema.userSignInValidation),
+  AdminController.loginAdmin,
+);
+
+router.get('/getAllGame', auth(USER_ROLE.ADMIN), GameController.getAllGame);
 
 router.post(
   '/approveGame',
