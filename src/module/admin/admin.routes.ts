@@ -72,6 +72,13 @@ router.delete(
   AdminController.rejectProfileUpdateByAdmin,
 );
 
+router.delete(
+  '/delete-user',
+  auth(USER_ROLE.ADMIN),
+  validationRequest(AdminValidationSchema.deleteUserValidationSchema),
+  AdminController.deleteUserByAdmin,
+);
+
 router.get(
   '/dashboard',
   auth(USER_ROLE.ADMIN),

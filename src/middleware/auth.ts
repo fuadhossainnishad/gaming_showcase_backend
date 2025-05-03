@@ -5,8 +5,10 @@ import AppError from '../app/error/AppError';
 import catchAsync from '../utility/catchAsync';
 import config from '../app/config';
 import users from '../module/user/user.model';
-import { USER_ROLE, UserRole, AdminRole } from '../module/user/user.constant';
-import { UserPayload, AdminPayload, AuthPayload } from '../types/express';
+import Admin from '../module/admin/admin.model';
+import { USER_ROLE, UserRole } from '../module/user/user.constant';
+import { UserPayload } from '../types/express';
+import User from '../module/user/user.model';
 
 const auth = (...requireRoles: UserRole[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -21,22 +23,6 @@ const auth = (...requireRoles: UserRole[]) => {
     const token = authHeader.startsWith('Bearer ')
       ? authHeader.split(' ')[1]
       : authHeader;
-
-    // if (token === config.admin_jwt_access_secret) {
-    //   const adminRole = USER_ROLE.ADMIN;
-
-    //   if (requireRoles.length && !requireRoles.includes(adminRole)) {
-    //     throw new AppError(httpStatus.FORBIDDEN, 'Access denied for admin', '');
-    //   }
-
-    //   const adminPayload: AdminPayload = {
-    //     id: 'Admin',
-    //     role: adminRole,
-    //   };
-
-    //   req.user = adminPayload;
-    //   return next();
-    // }
 
     let decoded: UserPayload;
     try {
@@ -57,11 +43,15 @@ const auth = (...requireRoles: UserRole[]) => {
     if (requireRoles.length && !requireRoles.includes(role)) {
       throw new AppError(httpStatus.FORBIDDEN, 'Access denied', '');
     }
-    console.log(decoded);
+    console.log('Decoded Token:', decoded);
 
-    const isUserExist = await users.findOne({ userId: id }, { userId: 1 });
+    let isUserExist = await User.findOne({ _id: id }, { _id: 1 });
+    if (!isUserExist && role === USER_ROLE.ADMIN) {
+      isUserExist = await Admin.findOne({ _id: id }, { _id: 1 });
+    }
+
     if (!isUserExist) {
-      throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+      throw new AppError(httpStatus.NOT_FOUND, 'User or Admin not found', '');
     }
 
     req.user = decoded;

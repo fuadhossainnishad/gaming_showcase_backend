@@ -14,47 +14,47 @@ const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
       required: [false, 'Game ID is not required'],
       ref: 'Games',
     },
-    game_title: {
+    title: {
       type: String,
       required: false,
     },
-    category: {
+    subTitle: {
       type: String,
-      enum: gameCategory,
       required: false,
     },
     description: {
       type: String,
       required: false,
     },
+    image: {
+      type: [String],
+      required: false,
+      default: [],
+    },
+    thumbnail: {
+      type: String,
+      required: false,
+    },
+    categories: {
+      type: [String],
+      required: false,
+    },
+    platform: {
+      type: [String],
+      required: false,
+    },
     price: {
       type: String,
       required: false,
     },
-    steam_link: {
-      type: String,
+    socialLinks: {
+      type: [
+        {
+          name: { type: String, required: true },
+          link: { type: String, required: true },
+        },
+      ],
       required: false,
-    },
-    x_link: {
-      type: String,
-      required: false,
-    },
-    linkedin_link: {
-      type: String,
-      required: false,
-    },
-    reddit_link: {
-      type: String,
-      required: false,
-    },
-    instagram_link: {
-      type: String,
-      required: false,
-    },
-    media_files: {
-      type: [String],
-      required: false,
-      default: [],
     },
     status: {
       type: String,

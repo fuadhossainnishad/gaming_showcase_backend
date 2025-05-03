@@ -11,7 +11,10 @@ const router = express.Router();
 router.post(
   '/upload_game',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  uploadGames.array('media_files', 5),
+  uploadGames.fields([
+    { name: 'image', maxCount: 5 },
+    { name: 'thumbnail', maxCount: 1 }
+  ]),
   validationRequest(GameValidationSchema.GameSchema),
   GameController.createNewGame,
 );
@@ -19,8 +22,11 @@ router.post(
 router.patch(
   '/update_game',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  uploadGames.array('media_files'),
-  validationRequest(GameValidationSchema.GameUpdateSchema),
+  uploadGames.fields([
+    { name: 'image', maxCount: 5 },
+    { name: 'thumbnail', maxCount: 1 }
+  ]),
+  validationRequest(GameValidationSchema.GameUpdateSchemaValidation),
   GameController.updateGame,
 );
 

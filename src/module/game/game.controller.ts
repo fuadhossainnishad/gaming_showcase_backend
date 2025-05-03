@@ -18,7 +18,10 @@ const createNewGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
     throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
   }
 
-  const userId = req.body.userId;
+  const userId = req.body.data && (typeof req.body.data === 'string'
+    ? JSON.parse(req.body.data).userId
+    : req.body.data?.userId);
+
   if (!userId) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User ID is required', '');
   }
@@ -102,18 +105,27 @@ const getTopGameOfWeek: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const updateGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
-  const files = Array.isArray(req.files)
-    ? req.files
-    : req.files && 'media_files' in req.files
-      ? req.files['media_files']
-      : undefined;
+  console.log('GameController.createNewGame - Inputs:', {
+    body: req.body,
+    files: req.files,
+    user: req.user,
+    headers: req.headers,
+  });
+  // const files = Array.isArray(req.files)
+  //   ? req.files
+  //   : req.files && 'media_files' in req.files
+  //     ? req.files['media_files']
+  //     : undefined;
+
+  if (!req.user) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
+  }
 
   const result = await GameServices.updateGameIntoDb(
-    req.user!._id,
+    req.user.id,
     req.body,
-    files,
+    req.files as { [fieldname: string]: Express.Multer.File[] },
   );
-
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

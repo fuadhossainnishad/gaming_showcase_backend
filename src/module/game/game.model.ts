@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { CreateGameModel, GameInterface } from './game.interface';
+import { CommentsInterface, CreateGameModel, GameInterface, ShareInterface } from './game.interface';
 import { gameCategory } from './game.constant';
 
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
@@ -9,51 +9,50 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       ref: 'User',
       required: true,
     },
-    gameId: {
+    author: {
+      type: String,
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    subTitle: {
       type: String,
       required: false,
-      unique: true,
-    },
-    game_title: {
-      type: String,
-      required: true,
-    },
-    category: {
-      type: String,
-      enum: gameCategory,
-      required: true,
     },
     description: {
       type: String,
       required: true,
     },
-    price: {
-      type: String,
-      required: true,
-    },
-    steam_link: {
-      type: String,
-      required: true,
-    },
-    x_link: {
-      type: String,
-      required: true,
-    },
-    linkedin_link: {
-      type: String,
-      required: true,
-    },
-    reddit_link: {
-      type: String,
-      required: true,
-    },
-    instagram_link: {
-      type: String,
-      required: true,
-    },
-    media_files: {
+    image: {
       type: [String],
       required: true,
+    },
+    thumbnail: {
+      type: String,
+      required: false,
+    },
+    categories: {
+      type: [String],
+      required: true,
+    },
+    platform: {
+      type: [String],
+      required: false,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    socialLinks: {
+      type: [
+        {
+          name: { type: String, required: true },
+          link: { type: String, required: true },
+        },
+      ],
+      required: false,
     },
     comments: {
       type: [
@@ -105,6 +104,23 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
   },
 );
 
+GameSchema.set('toJSON', {
+  virtuals: true, versionKey: false, transform: (_doc, ret) => {
+    ret.id = ret._id.toString()
+    delete ret._id
+    ret.userId = ret.userId.toString()
+    ret.comments = ret.comments.map((comment: CommentsInterface) => ({
+      ...comment,
+      userId: comment.userId.toString(),
+    }))
+    ret.shares = ret.shares.map((share: ShareInterface) => ({
+      ...share,
+      userId: share.userId.toString(),
+    }))
+    return ret
+  }
+})
+
 // Middleware
 GameSchema.pre('find', function (next) {
   this.where({ isDelete: { $ne: true } });
@@ -119,10 +135,9 @@ GameSchema.pre('findOne', function (next) {
   next();
 });
 
-// Set gameId before saving
 GameSchema.pre('save', function (next) {
-  if (!this.gameId) {
-    this.gameId = this._id.toString();
+  if (!this.id) {
+    this.id = this._id.toString();
   }
   next();
 });

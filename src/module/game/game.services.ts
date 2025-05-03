@@ -25,40 +25,65 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
     headers: req.headers,
   });
 
-  const payload = req.body;
+  const { data, image } = req.body
+  console.log(image)
 
-  if (!payload) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Request body is missing', '');
+  if (!data) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Data object is missing', '');
   }
-  if (!payload.game_title) {
+  if (!data.title) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Game title is required', '');
   }
-  if (!payload.category) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Category is required', '');
+  if (!data.categories || !data.categories.length) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Categories are required', '');
   }
 
-  const files = Array.isArray(req.files)
-    ? req.files
-    : req.files && 'media_files' in req.files
-      ? req.files['media_files']
-      : undefined;
+  // const payload = req.body;
 
-  const mediaFiles =
-    files?.map((file) => MediaUrl.gameMediaUrl(file.path, userId)) || [];
+  // if (!payload) {
+  //   throw new AppError(httpStatus.BAD_REQUEST, 'Request body is missing', '');
+  // }
+  // if (!payload.game_title) {
+  //   throw new AppError(httpStatus.BAD_REQUEST, 'Game title is required', '');
+  // }
+  // if (!payload.category) {
+  //   throw new AppError(httpStatus.BAD_REQUEST, 'Category is required', '');
+  // }
+
+  // const files = Array.isArray(req.files)
+  //   ? req.files
+  //   : req.files && 'media_files' in req.files
+  //     ? req.files['media_files']
+  //     : undefined;
+
+  // const mediaFiles =
+  //   files?.map((file) => MediaUrl.gameMediaUrl(file.path, userId)) || [];
+
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const imageFiles = files['image'] || [];
+  const thumbnailFile = files['thumbnail'] ? files['thumbnail'][0] : null;
+
+  const mediaFiles = imageFiles.map((file) => MediaUrl.gameMediaUrl(file.path, userId));
+  const thumbnail = thumbnailFile ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId) : (image?.thumbnail || '');
+
+  const user = await User.findById(userId).where({ isDeleted: { $ne: true } });
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+  }
 
   const gameData: GameInterface = {
+    id: new mongoose.Types.ObjectId().toString(),
     userId: userId,
-    gameId: payload.gameId,
-    game_title: payload.game_title,
-    category: payload.category,
-    description: payload.description || '',
-    price: payload.price,
-    steam_link: payload.steam_link || '',
-    x_link: payload.x_link || '',
-    linkedin_link: payload.linkedin_link || '',
-    reddit_link: payload.reddit_link || '',
-    instagram_link: payload.instagram_link || '',
-    media_files: mediaFiles,
+    author: data.author || 'Unknown',
+    title: data.title,
+    subTitle: data.subTitle || '',
+    description: data.description || '',
+    image: mediaFiles.length > 0 ? mediaFiles : (image?.images || []),
+    thumbnail: thumbnail,
+    categories: data.categories,
+    platform: data.platform || [],
+    price: data.price ? parseFloat(data.price) : 0,
+    socialLinks: data.socialLinks || [],
     comments: [],
     totalComments: 0,
     shares: [],
@@ -66,6 +91,27 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
     isApproved: false,
     isDelete: false,
   };
+
+  // const gameData: GameInterface = {
+  //   userId: userId,
+  //   gameId: payload.gameId,
+  //   game_title: payload.game_title,
+  //   category: payload.category,
+  //   description: payload.description || '',
+  //   price: payload.price,
+  //   steam_link: payload.steam_link || '',
+  //   x_link: payload.x_link || '',
+  //   linkedin_link: payload.linkedin_link || '',
+  //   reddit_link: payload.reddit_link || '',
+  //   instagram_link: payload.instagram_link || '',
+  //   media_files: mediaFiles,
+  //   comments: [],
+  //   totalComments: 0,
+  //   shares: [],
+  //   totalShare: 0,
+  //   isApproved: false,
+  //   isDelete: false,
+  // };
 
   const result = await games.create(gameData);
   return result;
@@ -86,7 +132,7 @@ const getAllGameIntoDb = async (
     }
 
     const gameQuery = new QueryBuilder(baseQuery, query)
-      .search(['game_title', 'description'])
+      .search(['title', 'description'])
       .filter()
       .sort()
       .pagination()
@@ -130,7 +176,7 @@ const userComment = async (payload: CommentPayload, userId: string) => {
 
     const updatedGame = await games
       .findByIdAndUpdate(
-        gameId,
+        { id: gameId },
         {
           $push: {
             comments: { userId, comment },
@@ -310,14 +356,14 @@ const getTopGameOfWeek = async (query: TopGameQuery) => {
 };
 
 const updateGameIntoDb = async (
-  _id: string,
+  id: string,
   payload: TGameUpdate,
-  files?: Express.Multer.File[],
+  files?: { [fieldname: string]: Express.Multer.File[] },
 ) => {
-  const { gameId, userId, ...updateData } = payload;
+  const { data, image } = payload;
   console.log(payload);
 
-  if (!userId) {
+  if (!data.userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'Provided user ID does not match authenticated user',
@@ -325,11 +371,11 @@ const updateGameIntoDb = async (
     );
   }
 
-  if (!mongoose.isValidObjectId(gameId)) {
+  if (!mongoose.isValidObjectId(data.gameId)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid game ID', '');
   }
 
-  const game = await games.findById(gameId).where({ isDelete: { $ne: true } });
+  const game = await games.findById(data.gameId).where({ isDelete: { $ne: true } });
   if (!game) {
     throw new AppError(
       httpStatus.NOT_FOUND,
@@ -338,7 +384,7 @@ const updateGameIntoDb = async (
     );
   }
 
-  if (game.userId !== userId) {
+  if (game.userId !== data.userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'You can only update your own games',
@@ -347,8 +393,8 @@ const updateGameIntoDb = async (
   }
 
   const existingUpdate = await PendingGameUpdate.findOne({
-    gameId: gameId,
-    userId,
+    gameId: data.gameId,
+    userId: data.userId,
     status: 'pending',
   });
   if (existingUpdate) {
@@ -359,21 +405,24 @@ const updateGameIntoDb = async (
     );
   }
 
+  const imageFiles = files?.['image'] || [];
+  const thumbnailFile = files?.['thumbnail'] ? files['thumbnail'][0] : null;
+
+  const mediaFiles = imageFiles.map((file) => MediaUrl.gameMediaUrl(file.path, data.userId));
+  const thumbnail = thumbnailFile ? MediaUrl.gameMediaUrl(thumbnailFile.path, data.userId) : (image?.thumbnail || '');
+
   const pendingUpdateData: Partial<IPendingGameUpdate> = {
-    gameId: gameId,
-    userId,
-    game_title: updateData.game_title,
-    category: updateData.category,
-    description: updateData.description,
-    price: updateData.price,
-    steam_link: updateData.steam_link,
-    x_link: updateData.x_link,
-    linkedin_link: updateData.linkedin_link,
-    reddit_link: updateData.reddit_link,
-    instagram_link: updateData.instagram_link,
-    media_files: files
-      ? files.map((file) => file.path)
-      : updateData.media_files,
+    gameId: data.gameId,
+    userId: data.userId,
+    title: data.title,
+    subTitle: data.subTitle,
+    description: data.description,
+    image: mediaFiles.length > 0 ? mediaFiles : (image?.images || []),
+    thumbnail: thumbnail,
+    categories: data.categories,
+    platform: data.platform,
+    price: data.price,
+    socialLinks: data.socialLinks,
     status: 'pending',
     submittedAt: new Date(),
   };

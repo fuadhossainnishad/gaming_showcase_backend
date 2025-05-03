@@ -24,10 +24,10 @@ router.patch(
   validationRequest(userValidation.userProfileUpdateValidation),
   UserController.updateProfileUser,
 );
-router.post(
-  '/profile/update',
-  verifyToken,
-  validationRequest(userValidation.userProfileUpdateValidation),
-  UserController.submitProfileUpdate,
-);
+// router.post(
+//   '/profile/update',
+//   verifyToken,
+//   validationRequest(userValidation.userProfileUpdateValidation),
+//   UserController.submitProfileUpdate,
+// );
 export const UserRouter = router;

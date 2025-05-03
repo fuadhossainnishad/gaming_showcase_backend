@@ -1,78 +1,36 @@
+import { Request } from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs/promises';
-import httpStatus from 'http-status';
-import AppError from '../../app/error/AppError';
+import fs from 'fs';
 
-const gameStorage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    console.log('Game Multer - Request Details:', {
-      userId: req.body.userId,
-      user: req.user,
-      body: req.body,
-      file: file.originalname,
-    });
-
-    const userId = req.body.userId;
-    if (!userId) {
-      console.error('Game Multer - Error: userId is missing');
-      return cb(
-        new AppError(
-          httpStatus.BAD_REQUEST,
-          'userId is required for file upload',
-          '',
-        ),
-        '',
-      );
-    }
-
-    const uploadDir = path.join(process.cwd(), `src/uploads/${userId}/games`);
-    console.log('Game Multer - Current Working Directory:', process.cwd());
-    console.log('Game Multer - Target Upload Directory:', uploadDir);
-
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      console.log(
-        'Game Multer - Directory created or already exists:',
-        uploadDir,
-      );
-      cb(null, uploadDir);
-    } catch (error: any) {
-      console.error(
-        'Game Multer - Directory creation failed:',
-        error.message,
-        error.stack,
-      );
-      cb(
-        new AppError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          `Failed to create game upload directory: ${error.message}`,
-          '',
-        ),
-        '',
-      );
-    }
-  },
-  filename: (req, file, cb) => {
-    const filename = `${Date.now()}-${file.originalname}`;
-    console.log('Game Multer - Generated filename:', filename);
-    cb(null, filename);
-  },
-});
+const storage = (destination: string) =>
+  multer.diskStorage({
+    destination: (req, file, cb) => {
+      const userId = req.body.data && typeof req.body.data === 'string'
+        ? JSON.parse(req.body.data).userId
+        : req.body.data?.userId || 'unknown';
+      const subDir = file.fieldname === 'image' ? 'images' : 'thumbnails';
+      const uploadPath = path.join(process.cwd(), 'src', 'uploads', userId, destination, subDir);
+      console.log('Game Multer - Target Upload Directory:', uploadPath);
+      fs.mkdirSync(uploadPath, { recursive: true });
+      console.log('Game Multer - Directory created or already exists:', uploadPath);
+      cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+      const filename = `${Date.now()}-${file.originalname}`;
+      console.log('Game Multer - Generated filename:', filename);
+      cb(null, filename);
+    },
+  });
 
 export const uploadGames = multer({
-  storage: gameStorage,
-  // fileFilter(req, file, cb: multer.FileFilterCallback) {
-  //   const fileTypes = /jpeg|jpg|png|mp4|mov/;
-  //   const fileExt = fileTypes.test(path.extname(file.originalname).toLowerCase());
-  //   const fileMimeType = fileTypes.test(file.mimetype);
-  //   if (fileExt && fileMimeType) {
-  //     console.log('Game Multer - File type accepted:', file.originalname);
+  storage: storage('games'),
+  // limits: { fileSize: 10 * 1024 * 1024 },
+  // fileFilter: (_req: Request, file, cb) => {
+  //   if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/webp') {
   //     cb(null, true);
   //   } else {
-  //     console.error('Game Multer - Invalid file type:', file.originalname);
-  //     cb(new AppError(httpStatus.BAD_REQUEST, 'Only JPEG, JPG, PNG, MP4, or MOV files are allowed', '') as any, false);
+  //     cb(new Error('Invalid file type. Only JPEG, PNG, and WEBP are allowed.') as any, false);
   //   }
   // },
-  // limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });

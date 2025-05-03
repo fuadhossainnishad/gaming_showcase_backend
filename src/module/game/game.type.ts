@@ -12,16 +12,19 @@ export type TopGameQuery = {
 };
 
 export type TGameUpdate = {
-  userId: string
-  gameId: string;
-  game_title?: string;
-  category?: string;
-  description?: string;
-  price?: string;
-  steam_link?: string;
-  x_link?: string;
-  linkedin_link?: string;
-  reddit_link?: string;
-  instagram_link?: string;
-  media_files?: string[];
+  data: {
+    userId: string;
+    gameId: string;
+    title?: string;
+    subTitle?: string;
+    description?: string;
+    categories?: string[];
+    platform?: string[];
+    price?: number;
+    socialLinks?: { name: string; link: string }[];
+  };
+  image?: {
+    images?: string[];
+    thumbnail?: string;
+  };
 };

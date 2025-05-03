@@ -10,16 +10,17 @@ import PendingUserUpdate from '../user/userUpdateProfile';
 import { IUser } from '../user/user.interface';
 import User from '../user/user.model';
 import PendingGameUpdate from '../game/gameUpdate.model';
-import { IPendingGameUpdate } from '../game/game.interface';
+import { GameInterface, IPendingGameUpdate } from '../game/game.interface';
 import { USER_ROLE } from '../user/user.constant';
 import { TAuth } from '../auth/auth.constant';
 import { jwtHelpers } from '../../app/jwtHalpers/jwtHalpers';
 import config from '../../app/config';
 import Admin from './admin.model';
+import { IAdmin } from './admin.interface';
 
-const createAdminIntoDb = async (payload: IUser) => {
+const createAdminIntoDb = async (payload: IAdmin) => {
   try {
-    console.log(payload);
+    console.log("admin: ", payload);
     const { name, email, password } = payload;
     const role = USER_ROLE.ADMIN;
     const isExist = await Admin.findOne({
@@ -70,7 +71,7 @@ const loginAdminIntoDb = async (payload: TAuth) => {
 
   const accessToken = jwtHelpers.generateToken(
     jwtPayload,
-    config.admin_jwt_access_secret as string,
+    config.jwt_access_secret as string,
     config.expires_in as string,
   );
 
@@ -123,6 +124,7 @@ const getPendingGameUpdates = async () => {
 };
 
 const approveGameUpdate = async (payload: TApproveGameUpdate) => {
+  console.log(payload.updateId);
   const pendingUpdate = await PendingGameUpdate.findById(payload.updateId);
   if (!pendingUpdate) {
     throw new AppError(
@@ -148,27 +150,35 @@ const approveGameUpdate = async (payload: TApproveGameUpdate) => {
     throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
   }
 
-  const updateFields: Partial<IPendingGameUpdate> = {};
-  if (pendingUpdate.game_title)
-    updateFields.game_title = pendingUpdate.game_title;
-  if (pendingUpdate.category) updateFields.category = pendingUpdate.category;
-  if (pendingUpdate.description)
-    updateFields.description = pendingUpdate.description;
-  if (pendingUpdate.price) updateFields.price = pendingUpdate.price;
-  if (pendingUpdate.steam_link)
-    updateFields.steam_link = pendingUpdate.steam_link;
-  if (pendingUpdate.x_link) updateFields.x_link = pendingUpdate.x_link;
-  if (pendingUpdate.linkedin_link)
-    updateFields.linkedin_link = pendingUpdate.linkedin_link;
-  if (pendingUpdate.reddit_link)
-    updateFields.reddit_link = pendingUpdate.reddit_link;
-  if (pendingUpdate.instagram_link)
-    updateFields.instagram_link = pendingUpdate.instagram_link;
-  if (pendingUpdate.media_files)
-    updateFields.media_files = pendingUpdate.media_files;
+  if (!game.isApproved) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Game must be approved before applying updates',
+      '',
+    );
+  }
+
+  const updateFields: Partial<GameInterface> = {};
+  if (pendingUpdate.title !== undefined) updateFields.title = pendingUpdate.title;
+  if (pendingUpdate.subTitle !== undefined) updateFields.subTitle = pendingUpdate.subTitle;
+  if (pendingUpdate.description !== undefined) updateFields.description = pendingUpdate.description;
+  if (pendingUpdate.image !== undefined) updateFields.image = pendingUpdate.image;
+  if (pendingUpdate.thumbnail !== undefined) updateFields.thumbnail = pendingUpdate.thumbnail;
+  if (pendingUpdate.categories !== undefined) updateFields.categories = pendingUpdate.categories;
+  if (pendingUpdate.platform !== undefined) updateFields.platform = pendingUpdate.platform;
+  if (pendingUpdate.price !== undefined) updateFields.price = pendingUpdate.price;
+  if (pendingUpdate.socialLinks !== undefined) updateFields.socialLinks = pendingUpdate.socialLinks;
+
+  if (Object.keys(updateFields).length === 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'No valid fields provided for update',
+      '',
+    );
+  }
 
   const updatedGame = await games
-    .findByIdAndUpdate(pendingUpdate.gameId, updateFields, {
+    .findByIdAndUpdate(pendingUpdate.gameId, { $set: updateFields }, {
       new: true,
       runValidators: true,
     })
@@ -180,10 +190,10 @@ const approveGameUpdate = async (payload: TApproveGameUpdate) => {
 
   await PendingGameUpdate.findByIdAndUpdate(payload.updateId, {
     status: 'approved',
+    // reviewedBy: payload.reviewedBy,
     reviewedAt: new Date(),
   });
-
-  return updatedGame;
+  return updatedGame
 };
 
 const rejectGameUpdate = async (updateId: string) => {
@@ -209,12 +219,12 @@ const rejectGameUpdate = async (updateId: string) => {
     reviewedAt: new Date(),
   });
 
-  return { message: 'Game update rejected successfully' };
+  return true;
 };
 
 const getPendingProfileUpdates = async () => {
   const updates = await PendingUserUpdate.find({ status: 'pending' }).populate(
-    'userId',
+    'id',
     'email name',
   );
   return updates;
@@ -298,6 +308,23 @@ const rejectProfileUpdate = async (adminId: string, updateId: string) => {
   });
 
   return { message: 'Profile update rejected successfully' };
+};
+
+const deleteUser = async (userId: string) => {
+  const findUser = await User.deleteOne({ id: userId });
+  if (!findUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+  }
+
+  // if (pendingUpdate.status !== 'pending') {
+  //   throw new AppError(
+  //     httpStatus.BAD_REQUEST,
+  //     'Update is not in pending status',
+  //     '',
+  //   );
+  // }
+
+  return { message: 'User deleted successfully' };
 };
 
 const getDashboardStats = async () => {
@@ -411,6 +438,7 @@ const AdminServices = {
   getPendingProfileUpdates,
   approveProfileUpdate,
   rejectProfileUpdate,
+  deleteUser,
   getDashboardStats,
 };
 

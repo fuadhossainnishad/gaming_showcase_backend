@@ -14,7 +14,7 @@ app.use(helmet());
 app.use(cookieParser());
 
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 //middlewere
 //credentials:true
 //https://shoes-client.vercel.app

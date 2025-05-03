@@ -1,6 +1,6 @@
 export type TAuth = {
-  email: string;
-  password: string;
+    email: string;
+    password: string;
 };
 
 export type TForgotPassword = {
@@ -14,7 +14,7 @@ export type TVerifyForgotPassword = {
 };
 
 export type TUpdateUserPassword = {
-    userId: string;
-    password: string;
-    newPassword: string;
-  };
+  userId: string;
+  password: string;
+  newPassword: string;
+};
