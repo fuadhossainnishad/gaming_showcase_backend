@@ -15,13 +15,14 @@ import { USER_ROLE } from '../user/user.constant';
 import { TAuth } from '../auth/auth.constant';
 import { jwtHelpers } from '../../app/jwtHalpers/jwtHalpers';
 import config from '../../app/config';
+import Admin from './admin.model';
 
 const createAdminIntoDb = async (payload: IUser) => {
   try {
     console.log(payload);
     const { name, email, password } = payload;
     const role = USER_ROLE.ADMIN;
-    const isExist = await User.findOne({
+    const isExist = await Admin.findOne({
       email,
       role,
       isDeleted: { $ne: true },
@@ -29,7 +30,7 @@ const createAdminIntoDb = async (payload: IUser) => {
     if (isExist) {
       throw new AppError(httpStatus.FORBIDDEN, 'Admin already exist', '');
     }
-    const createAdminBuilder = new User(payload);
+    const createAdminBuilder = new Admin(payload);
     console.log(createAdminBuilder);
     const result = await createAdminBuilder.save();
     return result && { status: true, message: 'successfully create new admin' };
@@ -43,7 +44,7 @@ const createAdminIntoDb = async (payload: IUser) => {
 };
 
 const loginAdminIntoDb = async (payload: TAuth) => {
-  const isAdminExist = await User.findOne(
+  const isAdminExist = await Admin.findOne(
     { email: payload.email },
     { password: 1, _id: 1, email: 1, role: 1 },
   );
@@ -237,7 +238,7 @@ const approveProfileUpdate = async (
   }
 
   const user = await User.findOne({
-    userId: pendingUpdate.userId,
+    userId: pendingUpdate.id,
     isDeleted: { $ne: true },
   });
   if (!user) {
@@ -254,7 +255,7 @@ const approveProfileUpdate = async (
     updateFields.photo = pendingUpdate.photo;
 
   const updatedUser = await User.findOneAndUpdate(
-    { userId: pendingUpdate.userId, isDeleted: { $ne: true } },
+    { userId: pendingUpdate.id, isDeleted: { $ne: true } },
     updateFields,
     { new: true },
   ).select('-password');

@@ -4,7 +4,7 @@ import { linksRegex } from '../../constants/regex.constants';
 
 const pendingUserUpdateSchema = new Schema<IPendingUserUpdate>(
   {
-    userId: {
+    id: {
       type: String,
       required: [true, 'User ID is required'],
       ref: 'User',

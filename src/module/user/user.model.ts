@@ -8,7 +8,7 @@ import { boolean } from 'zod';
 
 const userSchema = new Schema<IUser, IUserModel>(
   {
-    userId: {
+    id: {
       type: String,
       required: [false, 'User ID is not required'],
       sparse: true,
@@ -71,9 +71,20 @@ const userSchema = new Schema<IUser, IUserModel>(
 );
 
 // Middleware and methods stay the same
+// userSchema.set('toJSON', {
+//   virtuals: true,
+//   transform: function (doc, ret) {
+//     delete ret.password;
+//     return ret;
+//   },
+// });
+
 userSchema.set('toJSON', {
   virtuals: true,
+  versionKey: false,
   transform: function (doc, ret) {
+    ret.id = ret._id.toString();
+    delete ret._id;
     delete ret.password;
     return ret;
   },
@@ -82,13 +93,11 @@ userSchema.set('toJSON', {
 userSchema.pre('save', async function (next) {
   const user = this;
 
-  if (user.isNew) {
-    if (user.password) {
+  if (user.isNew && user.password) {
       user.password = await bcrypt.hash(
         user.password,
         Number(config.bcrypt_salt_rounds as string),
       );
-    }
     return next();
   }
 
@@ -114,14 +123,14 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.post('save', async function (doc, next) {
-  if (!doc.userId) {
-    doc.userId = doc._id.toString();
-    await doc.model('User').findByIdAndUpdate(doc._id, { userId: doc.userId });
-  }
-  doc.password = '';
-  next();
-});
+// userSchema.post('save', async function (doc, next) {
+//   if (!doc.id) {
+//     doc.id = doc._id.toString();
+//     await doc.model('User').findByIdAndUpdate(doc._id, { userId: doc.userId });
+//   }
+//   doc.password = '';
+//   next();
+// });
 
 userSchema.pre('find', function (next) {
   this.find({ isDeleted: { $ne: true } });

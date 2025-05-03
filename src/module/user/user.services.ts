@@ -106,7 +106,7 @@ const updateUserProfileIntoDb = async (
       );
     }
 
-    if (existingUser.userId !== userId) {
+    if (existingUser.id !== userId) {
       throw new AppError(
         httpStatus.FORBIDDEN,
         'You can only update your own profile',
@@ -120,7 +120,7 @@ const updateUserProfileIntoDb = async (
     console.log('photoPath:', photoPath);
 
     const pendingUserUpdateData: Partial<IPendingUserUpdate> = {
-      userId,
+      id:userId,
       ...updateFields,
       photo: photoPath,
       status: 'pending',

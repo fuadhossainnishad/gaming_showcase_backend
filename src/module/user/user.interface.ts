@@ -2,7 +2,7 @@ import { Model, Types } from 'mongoose';
 import { USER_ROLE } from './user.constant';
 
 export interface IUser {
-  userId?: string;
+  id?: string;
   name?: string;
   email: string;
   password: string;
@@ -28,7 +28,7 @@ export interface IUserUpdate {
 }
 
 export interface IPendingUserUpdate {
-  userId: string;
+  id: string;
   name?: string;
   bio?: string;
   links?: string[];
