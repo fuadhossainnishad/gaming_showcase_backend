@@ -4,8 +4,8 @@ import {
   CreateGameModel,
   GameInterface,
   ShareInterface,
-} from './game.interface';
-import { gameCategory } from './game.constant';
+} from './blog.interface';
+import { gameCategory } from './blog.constant';
 
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
   {

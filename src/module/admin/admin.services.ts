@@ -20,7 +20,7 @@ import { IAdmin } from './admin.interface';
 
 const createAdminIntoDb = async (payload: IAdmin) => {
   try {
-    console.log("admin: ", payload);
+    console.log('admin: ', payload);
     const { name, email, password } = payload;
     const role = USER_ROLE.ADMIN;
     const isExist = await Admin.findOne({
@@ -159,15 +159,24 @@ const approveGameUpdate = async (payload: TApproveGameUpdate) => {
   }
 
   const updateFields: Partial<GameInterface> = {};
-  if (pendingUpdate.title !== undefined) updateFields.title = pendingUpdate.title;
-  if (pendingUpdate.subTitle !== undefined) updateFields.subTitle = pendingUpdate.subTitle;
-  if (pendingUpdate.description !== undefined) updateFields.description = pendingUpdate.description;
-  if (pendingUpdate.image !== undefined) updateFields.image = pendingUpdate.image;
-  if (pendingUpdate.thumbnail !== undefined) updateFields.thumbnail = pendingUpdate.thumbnail;
-  if (pendingUpdate.categories !== undefined) updateFields.categories = pendingUpdate.categories;
-  if (pendingUpdate.platform !== undefined) updateFields.platform = pendingUpdate.platform;
-  if (pendingUpdate.price !== undefined) updateFields.price = pendingUpdate.price;
-  if (pendingUpdate.socialLinks !== undefined) updateFields.socialLinks = pendingUpdate.socialLinks;
+  if (pendingUpdate.title !== undefined)
+    updateFields.title = pendingUpdate.title;
+  if (pendingUpdate.subTitle !== undefined)
+    updateFields.subTitle = pendingUpdate.subTitle;
+  if (pendingUpdate.description !== undefined)
+    updateFields.description = pendingUpdate.description;
+  if (pendingUpdate.image !== undefined)
+    updateFields.image = pendingUpdate.image;
+  if (pendingUpdate.thumbnail !== undefined)
+    updateFields.thumbnail = pendingUpdate.thumbnail;
+  if (pendingUpdate.categories !== undefined)
+    updateFields.categories = pendingUpdate.categories;
+  if (pendingUpdate.platform !== undefined)
+    updateFields.platform = pendingUpdate.platform;
+  if (pendingUpdate.price !== undefined)
+    updateFields.price = pendingUpdate.price;
+  if (pendingUpdate.socialLinks !== undefined)
+    updateFields.socialLinks = pendingUpdate.socialLinks;
 
   if (Object.keys(updateFields).length === 0) {
     throw new AppError(
@@ -178,10 +187,14 @@ const approveGameUpdate = async (payload: TApproveGameUpdate) => {
   }
 
   const updatedGame = await games
-    .findByIdAndUpdate(pendingUpdate.gameId, { $set: updateFields }, {
-      new: true,
-      runValidators: true,
-    })
+    .findByIdAndUpdate(
+      pendingUpdate.gameId,
+      { $set: updateFields },
+      {
+        new: true,
+        runValidators: true,
+      },
+    )
     .where({ isDelete: { $ne: true } });
 
   if (!updatedGame) {
@@ -193,7 +206,7 @@ const approveGameUpdate = async (payload: TApproveGameUpdate) => {
     // reviewedBy: payload.reviewedBy,
     reviewedAt: new Date(),
   });
-  return updatedGame
+  return updatedGame;
 };
 
 const rejectGameUpdate = async (updateId: string) => {
@@ -259,6 +272,7 @@ const approveProfileUpdate = async (
     approvedUpdate: true,
   };
   if (pendingUpdate.name) updateFields.name = pendingUpdate.name;
+  if (pendingUpdate.userName) updateFields.userName = pendingUpdate.userName;
   if (pendingUpdate.bio !== undefined) updateFields.bio = pendingUpdate.bio;
   if (pendingUpdate.links) updateFields.links = pendingUpdate.links;
   if (pendingUpdate.photo !== undefined)

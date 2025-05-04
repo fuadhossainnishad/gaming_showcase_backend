@@ -12,7 +12,10 @@ const userSignUpValidation = z.object({
       name: z
         .string({ required_error: 'Name is required' })
         .min(1, 'Name is required'),
-      email: z.string({ required_error: 'Email is required' }).email(),
+      email: z
+        .string({ required_error: 'Email is required' })
+        .email()
+        .regex(emailRegex, 'Invalid Email'),
       // role: z.enum([USER_ROLE.ADMIN, USER_ROLE.USER]),
       password: z
         .string({ required_error: 'Password is required' })
@@ -21,7 +24,7 @@ const userSignUpValidation = z.object({
           passwordRegex,
           'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
         ),
-    })
+    }),
   }),
 });
 
@@ -47,6 +50,7 @@ const userProfileUpdateValidation = z.object({
         .string({ required_error: 'Name is required' })
         .min(1, 'Name is required')
         .optional(),
+      userName: z.string().optional(),
       bio: z.string().optional(),
       links: z
         .array(

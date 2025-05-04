@@ -17,12 +17,14 @@ const NewsletterSchema = new Schema<INewsletter>(
 );
 
 NewsletterSchema.set('toJSON', {
-  virtuals: true, versionKey: false, transform: (_doc, ret) => {
-    ret.id = ret._id.toString()
-    delete ret._id
-    return ret
-  }
-})
+  virtuals: true,
+  versionKey: false,
+  transform: (_doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    return ret;
+  },
+});
 
 const NewsLetter: Model<INewsletter> = model<INewsletter>(
   'NewsLetter',

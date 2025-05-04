@@ -13,6 +13,10 @@ const pendingUserUpdateSchema = new Schema<IPendingUserUpdate>(
       type: String,
       required: false,
     },
+    userName: {
+      type: String,
+      required: false,
+    },
     bio: {
       type: String,
       required: false,
@@ -40,11 +44,6 @@ const pendingUserUpdateSchema = new Schema<IPendingUserUpdate>(
     submittedAt: {
       type: Date,
       default: Date.now,
-    },
-    reviewedBy: {
-      type: String,
-      ref: 'User',
-      required: false,
     },
     reviewedAt: {
       type: Date,

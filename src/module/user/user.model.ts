@@ -17,6 +17,10 @@ const userSchema = new Schema<IUser, IUserModel>(
       type: String,
       required: [true, 'name is Required'],
     },
+    userName: {
+      type: String,
+      required: false,
+    },
     email: {
       type: String,
       required: [true, 'Email is Required'],
@@ -53,13 +57,24 @@ const userSchema = new Schema<IUser, IUserModel>(
     approvedUpdate: {
       type: Boolean,
       required: [false, 'Approved update is not require'],
-      default: false,
+      default: true,
     },
-    uploadedGame: {
-      type: [String],
-      required: [false, 'photo is not require'],
-      default: [],
-    },
+    uploadedGame: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Game',
+        required: false,
+        default: [],
+      },
+    ],
+    upVotedGame: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Game',
+        required: false,
+        default: [],
+      },
+    ],
     isDeleted: {
       type: Boolean,
       default: false,
@@ -94,10 +109,10 @@ userSchema.pre('save', async function (next) {
   const user = this;
 
   if (user.isNew && user.password) {
-      user.password = await bcrypt.hash(
-        user.password,
-        Number(config.bcrypt_salt_rounds as string),
-      );
+    user.password = await bcrypt.hash(
+      user.password,
+      Number(config.bcrypt_salt_rounds as string),
+    );
     return next();
   }
 

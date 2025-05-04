@@ -2,7 +2,12 @@ import httpStatus from 'http-status';
 
 import User from './user.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
-import { IPendingUserUpdate, IUser, IUserUpdate } from './user.interface';
+import {
+  IPendingUserUpdate,
+  IUser,
+  IUserUpdate,
+  TSignup,
+} from './user.interface';
 import mongoose from 'mongoose';
 import { updateUserProfileType, USER_ROLE } from './user.constant';
 import config from '../../app/config';
@@ -10,7 +15,7 @@ import AppError from '../../app/error/AppError';
 import PendingUserUpdate from './userUpdateProfile';
 import MediaUrl from '../../utility/game.media';
 
-const createUserIntoDb = async (payload: IUser) => {
+const createUserIntoDb = async (payload: TSignup) => {
   try {
     console.log(payload);
     const { name, email, password } = payload;
@@ -23,10 +28,16 @@ const createUserIntoDb = async (payload: IUser) => {
     if (isExist) {
       throw new AppError(httpStatus.FORBIDDEN, 'User already exist', '');
     }
-    const createUserBuilder = new User(payload);
-    // console.log(createUserBuilder);
+
+    const createUserBuilder = new User({ name, email, password, role });
+    console.log(createUserBuilder);
     const result = await createUserBuilder.save();
-    return result && { status: true, message: 'successfully create new user' };
+    return (
+      createUserBuilder && {
+        status: true,
+        message: 'successfully create new user',
+      }
+    );
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
@@ -56,6 +67,31 @@ const findAllUserIntoDb = async (query: Record<string, unknown>) => {
       '',
     );
   }
+};
+
+const userProfile = async (userId: string) => {
+  if (!userId) {
+    throw new AppError(httpStatus.NO_CONTENT, 'Invalid userId', '');
+  }
+  const findUser = await User.findOne({ _id: userId })
+    .populate({
+      path: 'uploadedGame',
+      match: { isDelete: { $ne: true }, isApproved: true },
+      select:
+        'id title thumbnail categories price gameStatus totalUpvote totalComments',
+    })
+    .populate({
+      path: 'upVotedGame',
+      match: { isDelete: { $ne: true }, isApproved: true },
+      select:
+        'id title thumbnail categories price gameStatus totalUpvote totalComments',
+    })
+    .select('-password');
+
+  if (!findUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+  }
+  return findUser;
 };
 
 const updateUserProfileIntoDb = async (
@@ -120,7 +156,7 @@ const updateUserProfileIntoDb = async (
     console.log('photoPath:', photoPath);
 
     const pendingUserUpdateData: Partial<IPendingUserUpdate> = {
-      id:userId,
+      id: userId,
       ...updateFields,
       photo: photoPath,
       status: 'pending',
@@ -169,6 +205,7 @@ const submitProfileUpdate = async (
   const updateData = {
     userId,
     name: payload.name,
+    userName: payload.userName,
     bio: payload.bio,
     links: payload.links,
     photo: MediaUrl.profileMediaUrl(payload.photo as string, userId),
@@ -182,6 +219,7 @@ const submitProfileUpdate = async (
 const UserServices = {
   createUserIntoDb,
   findAllUserIntoDb,
+  userProfile,
   updateUserProfileIntoDb,
   submitProfileUpdate,
 };

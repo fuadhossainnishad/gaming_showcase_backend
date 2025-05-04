@@ -14,14 +14,10 @@ export interface SocialLinksInterface {
   link: string;
 }
 
-export interface Upvote {
-  userId: string;
-}
-
 export interface GameInterface {
   id: string;
   userId: string;
-  userName: string;
+  author: string;
   title: string;
   subTitle?: string;
   description: string;
@@ -33,8 +29,6 @@ export interface GameInterface {
   socialLinks: SocialLinksInterface[];
   gameStatus: 'active' | 'upcoming';
   upcomingDate: Date;
-  upvote: Upvote[];
-  totalUpvote: number;
   comments: CommentsInterface[];
   totalComments: number;
   shares: ShareInterface[];

@@ -1,36 +1,44 @@
 import { Model, Types } from 'mongoose';
 import { USER_ROLE } from './user.constant';
+import { GameInterface } from '../game/game.interface';
 
+export type TSignup = {
+  name: string;
+  email: string;
+  password: string;
+};
 
 export interface IUser {
-    id?: string;
-    name?: string;
-    email: string;
-    password: string;
-    role: string;
-    bio?: string;
-    links?: string[];
-    photo?: string;
-    approvedUpdate: boolean;
-    uploadedGame?: string[];
-    isDeleted?: boolean;
+  id?: string;
+  name?: string;
+  userName?: string;
+  email: string;
+  password: string;
+  role: string;
+  bio?: string;
+  links?: string[];
+  photo?: string;
+  approvedUpdate: boolean;
+  uploadedGame?: GameInterface[];
+  upVotedGame: GameInterface[];
+  isDeleted?: boolean;
 }
 
 export interface IUserUpdate {
   id?: string;
   name?: string;
-  email?: string;
+  userName?: string;
   bio?: string;
   links?: string[];
   photo?: string;
   approvedUpdate?: boolean;
-  uploadedGame?: string[];
   isDeleted?: boolean;
 }
 
 export interface IPendingUserUpdate {
   id: string;
   name?: string;
+  userName?: string;
   bio?: string;
   links?: string[];
   photo?: string;

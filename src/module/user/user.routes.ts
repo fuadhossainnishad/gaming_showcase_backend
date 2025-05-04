@@ -17,6 +17,8 @@ router.post(
 
 router.get('/find_all_users', UserController.findAllUser);
 
+router.get('/user-profile', auth(USER_ROLE.USER), UserController.userProfile);
+
 router.patch(
   '/update_profile',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),

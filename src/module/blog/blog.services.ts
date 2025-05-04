@@ -1,7 +1,7 @@
 import { RequestWithFiles } from '../../types/express';
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
-import games from './game.model';
+import games from './blog.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
 import User from '../user/user.model';
 import {
@@ -9,11 +9,11 @@ import {
   SharePayload,
   TGameUpdate,
   TopGameQuery,
-} from './game.type';
+} from './blog.type';
 import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
 import { USER_ROLE, UserRole } from '../user/user.constant';
-import PendingGameUpdate from './gameUpdate.model';
-import { GameInterface, IPendingGameUpdate } from './game.interface';
+import PendingGameUpdate from './blogUpdate.model';
+import { GameInterface, IPendingGameUpdate } from './blog.interface';
 import mongoose from 'mongoose';
 import MediaUrl from '../../utility/game.media';
 
@@ -78,7 +78,7 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   const gameData: GameInterface = {
     id: new mongoose.Types.ObjectId().toString(),
     userId: userId,
-    userName: data.userName || 'Unknown',
+    author: data.author || 'Unknown',
     title: data.title,
     subTitle: data.subTitle || '',
     description: data.description || '',

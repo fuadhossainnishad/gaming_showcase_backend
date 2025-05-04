@@ -42,21 +42,21 @@ const findAllNewsletterEmailIntoDb = async (query: Record<string, unknown>) => {
       .pagination()
       .fields();
 
-      const emails = await allNewsletterMailQuery.modelQuery;
+    const emails = await allNewsletterMailQuery.modelQuery;
 
-      const total = await NewsLetter.countDocuments(query); 
-  
-      const page = query.page ? Number(query.page) : 1;
-      const limit = query.limit ? Number(query.limit) : 10;
-  
-      return {
-        meta: {
-          total,
-          page,
-          limit,
-        },
-        data: emails,
-      };
+    const total = await NewsLetter.countDocuments(query);
+
+    const page = query.page ? Number(query.page) : 1;
+    const limit = query.limit ? Number(query.limit) : 10;
+
+    return {
+      meta: {
+        total,
+        page,
+        limit,
+      },
+      data: emails,
+    };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
@@ -66,9 +66,37 @@ const findAllNewsletterEmailIntoDb = async (query: Record<string, unknown>) => {
   }
 };
 
+const deleteAllNewsletterIntoDB = async () => {
+  const newsletterEmailCount = await NewsLetter.countDocuments({
+    isDeleted: false,
+  });
+  if (newsletterEmailCount < 0) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'There is no newsletter subscribe email',
+      '',
+    );
+  }
+
+  const deleteAll = await NewsLetter.deleteMany({ isDeleted: false });
+
+  return deleteAll;
+};
+
+const deleteNewsletterIntoDB = async (newsletterId: string) => {
+  if (!newsletterId) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Invalid newsletter Id', '');
+  }
+  const deleteOne = await NewsLetter.deleteOne({ id: newsletterId });
+
+  return deleteOne;
+};
+
 const newsletterService = {
   addNewsletterMail,
   findAllNewsletterEmailIntoDb,
+  deleteAllNewsletterIntoDB,
+  deleteNewsletterIntoDB,
 };
 
 export default newsletterService;

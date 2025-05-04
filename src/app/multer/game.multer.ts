@@ -1,4 +1,3 @@
-import { Request } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -6,14 +5,25 @@ import fs from 'fs';
 const storage = (destination: string) =>
   multer.diskStorage({
     destination: (req, file, cb) => {
-      const userId = req.body.data && typeof req.body.data === 'string'
-        ? JSON.parse(req.body.data).userId
-        : req.body.data?.userId || 'unknown';
+      const userId =
+        req.body.data && typeof req.body.data === 'string'
+          ? JSON.parse(req.body.data).userId
+          : req.body.data?.userId || 'unknown';
       const subDir = file.fieldname === 'image' ? 'images' : 'thumbnails';
-      const uploadPath = path.join(process.cwd(), 'src', 'uploads', userId, destination, subDir);
+      const uploadPath = path.join(
+        process.cwd(),
+        'src',
+        'uploads',
+        userId,
+        destination,
+        subDir,
+      );
       console.log('Game Multer - Target Upload Directory:', uploadPath);
       fs.mkdirSync(uploadPath, { recursive: true });
-      console.log('Game Multer - Directory created or already exists:', uploadPath);
+      console.log(
+        'Game Multer - Directory created or already exists:',
+        uploadPath,
+      );
       cb(null, uploadPath);
     },
     filename: (req, file, cb) => {

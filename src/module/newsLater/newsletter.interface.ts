@@ -1,4 +1,4 @@
-export interface INewsletter{
-    email:string,
-    isDeleted:boolean
+export interface INewsletter {
+  email: string;
+  isDeleted: boolean;
 }

@@ -7,8 +7,8 @@ import AppError from '../../app/error/AppError';
 import { IUserUpdate } from './user.interface';
 
 const createUser: RequestHandler = catchAsync(async (req, res) => {
-  const result = await UserServices.createUserIntoDb(req.body);
-  console.log(req.body)
+  // console.log("login req: ",req.body);
+  const result = await UserServices.createUserIntoDb(req.body.data);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
@@ -19,6 +19,18 @@ const createUser: RequestHandler = catchAsync(async (req, res) => {
 
 const findAllUser: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserServices.findAllUserIntoDb(req.query);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'successfully find all user',
+    data: result,
+  });
+});
+
+const userProfile: RequestHandler = catchAsync(async (req, res) => {
+  console.log(req.user?.userId);
+
+  const result = await UserServices.userProfile(req.user?.userId);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -76,6 +88,7 @@ const submitProfileUpdate: RequestHandler = catchAsync(async (req, res) => {
 const UserController = {
   createUser,
   findAllUser,
+  userProfile,
   updateProfileUser,
   submitProfileUpdate,
 };

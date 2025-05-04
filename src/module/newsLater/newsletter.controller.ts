@@ -27,9 +27,33 @@ const findAllNewsletterEmail: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const deleteAllNewsletter: RequestHandler = catchAsync(async (req, res) => {
+  const result = await newsletterService.deleteAllNewsletterIntoDB();
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: 'successfully delete all the newsletter emails',
+    data: result,
+  });
+});
+
+const deleteNewsletter: RequestHandler = catchAsync(async (req, res) => {
+  const result = await newsletterService.deleteNewsletterIntoDB(
+    req.body.data.newsletterId,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: 'successfully delete newsletter email',
+    data: result,
+  });
+});
+
 const newsletterController = {
   addNewsletterMail,
   findAllNewsletterEmail,
+  deleteAllNewsletter,
+  deleteNewsletter,
 };
 
 export default newsletterController;
