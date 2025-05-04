@@ -1,11 +1,12 @@
-import { Schema, model } from 'mongoose';
+import { Schema, Types, model } from 'mongoose';
 import { IPendingUserUpdate } from './user.interface';
 import { linksRegex } from '../../constants/regex.constants';
+import mongoose from 'mongoose';
 
 const pendingUserUpdateSchema = new Schema<IPendingUserUpdate>(
   {
-    id: {
-      type: String,
+    userId: {
+      type: Schema.Types.ObjectId,
       required: [true, 'User ID is required'],
       ref: 'User',
     },

@@ -1,16 +1,17 @@
-import { Schema, model } from 'mongoose';
+import mongoose, { Schema, Types, model } from 'mongoose';
 import { gameCategory } from './game.constant';
 import { IPendingGameUpdate } from './game.interface';
+import { types } from 'util';
 
 const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
   {
     userId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: [true, 'User ID is required'],
       ref: 'User',
     },
     gameId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: [false, 'Game ID is not required'],
       ref: 'Games',
     },
@@ -77,6 +78,17 @@ const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
   },
   { timestamps: true },
 );
+
+pendingGameUpdateSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.password;
+    return ret;
+  },
+});
 
 const PendingGameUpdate = model<IPendingGameUpdate>(
   'PendingGameUpdate',
