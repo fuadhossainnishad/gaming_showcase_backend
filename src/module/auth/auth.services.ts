@@ -8,6 +8,8 @@ import ForgotPassword from './auth.model';
 import bcrypt from 'bcrypt'
 
 const loginUserIntoDb = async (payload: TAuth) => {
+  console.log(payload);
+
   const isUserExist = await User.findOne(
     { email: payload.email },
     { password: 1, _id: 1, email: 1, role: 1 },

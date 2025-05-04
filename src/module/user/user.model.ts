@@ -1,4 +1,4 @@
-import { Model, Schema, model } from 'mongoose';
+import { Model, Schema, Types, model } from 'mongoose';
 import bcrypt from 'bcrypt';
 import config from '../../app/config';
 import { USER_ROLE } from './user.constant';
@@ -8,11 +8,12 @@ import { boolean } from 'zod';
 
 const userSchema = new Schema<IUser, IUserModel>(
   {
-    id: {
-      type: String,
-      required: [false, 'User ID is not required'],
-      sparse: true,
-    },
+    // id: {
+    //   type: Types.ObjectId,
+    //   required: [false, 'User ID is not required'],
+    //   sparse: true,
+    //   unique: true
+    // },
     name: {
       type: String,
       required: [true, 'name is Required'],

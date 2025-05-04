@@ -10,11 +10,11 @@ import { gameCategory } from './game.constant';
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
   {
     userId: {
-      type: String,
+      type: mongoose.SchemaTypes.ObjectId,
       ref: 'User',
       required: true,
     },
-    author: {
+    userName: {
       type: String,
       required: true,
     },
@@ -127,9 +127,9 @@ GameSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
   transform: (_doc, ret) => {
-    ret.gameId = ret._id.toString();
+    ret.id = ret._id.toString();
     delete ret._id;
-    ret.userId = ret.userId.toString();
+    ret.userId = ret.userId?.toString();
     ret.comments = ret.comments.map((comment: CommentsInterface) => ({
       ...comment,
       userId: comment.userId.toString(),
@@ -156,12 +156,12 @@ GameSchema.pre('findOne', function (next) {
   next();
 });
 
-GameSchema.pre('save', function (next) {
-  if (!this.id) {
-    this.id = this._id.toString();
-  }
-  next();
-});
+// GameSchema.pre('save', function (next) {
+//   if (!this.id) {
+//     this.id = this._id.toString();
+//   }
+//   next();
+// });
 
 GameSchema.statics.isExistGame = async function (
   id: string,

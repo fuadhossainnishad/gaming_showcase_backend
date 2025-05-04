@@ -13,7 +13,7 @@ import {
 import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
 import { USER_ROLE, UserRole } from '../user/user.constant';
 import PendingGameUpdate from './gameUpdate.model';
-import { GameInterface, IPendingGameUpdate } from './game.interface';
+import { GameInterface, IPendingGameUpdate, Upvote } from './game.interface';
 import mongoose from 'mongoose';
 import MediaUrl from '../../utility/game.media';
 
@@ -76,8 +76,8 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   }
 
   const gameData: GameInterface = {
-    id: new mongoose.Types.ObjectId().toString(),
-    userId: userId,
+    // id: new mongoose.Types.ObjectId(),
+    userId: typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId,
     userName: data.userName || 'Unknown',
     title: data.title,
     subTitle: data.subTitle || '',
@@ -94,6 +94,8 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
     totalComments: 0,
     shares: [],
     totalShare: 0,
+    upvote: data.upvote,
+    totalUpvote: data.totalUpvote,
     isApproved: false,
     isDelete: false,
   };
@@ -367,9 +369,11 @@ const updateGameIntoDb = async (
   files?: { [fieldname: string]: Express.Multer.File[] },
 ) => {
   const { data, image } = payload;
+  const dataGameId = new mongoose.Types.ObjectId(data.gameId)
+  const dataUserId = new mongoose.Types.ObjectId(data.userId)
   console.log(payload);
 
-  if (!data.userId) {
+  if (!dataUserId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'Provided user ID does not match authenticated user',
@@ -377,12 +381,12 @@ const updateGameIntoDb = async (
     );
   }
 
-  if (!mongoose.isValidObjectId(data.gameId)) {
+  if (!mongoose.isValidObjectId(dataGameId)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid game ID', '');
   }
 
   const game = await games
-    .findById(data.gameId)
+    .findById(dataGameId)
     .where({ isDelete: { $ne: true } });
   if (!game) {
     throw new AppError(
@@ -392,7 +396,7 @@ const updateGameIntoDb = async (
     );
   }
 
-  if (game.userId !== data.userId) {
+  if (game.userId !== dataUserId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'You can only update your own games',
@@ -401,8 +405,8 @@ const updateGameIntoDb = async (
   }
 
   const existingUpdate = await PendingGameUpdate.findOne({
-    gameId: data.gameId,
-    userId: data.userId,
+    gameId: dataGameId,
+    userId: dataUserId,
     status: 'pending',
   });
   if (existingUpdate) {
@@ -424,8 +428,8 @@ const updateGameIntoDb = async (
     : image?.thumbnail || '';
 
   const pendingUpdateData: Partial<IPendingGameUpdate> = {
-    gameId: data.gameId,
-    userId: data.userId,
+    gameId: dataGameId,
+    userId: dataUserId,
     title: data.title,
     subTitle: data.subTitle,
     description: data.description,

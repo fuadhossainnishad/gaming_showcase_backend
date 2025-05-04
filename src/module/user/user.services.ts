@@ -14,6 +14,7 @@ import config from '../../app/config';
 import AppError from '../../app/error/AppError';
 import PendingUserUpdate from './userUpdateProfile';
 import MediaUrl from '../../utility/game.media';
+import { idConverter } from '../../utility/idCoverter';
 
 const createUserIntoDb = async (payload: TSignup) => {
   try {
@@ -156,7 +157,7 @@ const updateUserProfileIntoDb = async (
     console.log('photoPath:', photoPath);
 
     const pendingUserUpdateData: Partial<IPendingUserUpdate> = {
-      id: userId,
+      userId: await idConverter(userId),
       ...updateFields,
       photo: photoPath,
       status: 'pending',

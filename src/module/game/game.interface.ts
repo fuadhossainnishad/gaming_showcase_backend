@@ -15,12 +15,12 @@ export interface SocialLinksInterface {
 }
 
 export interface Upvote {
-  userId: string;
+  userId: Types.ObjectId;
 }
 
 export interface GameInterface {
-  id: string;
-  userId: string;
+  // id: Types.ObjectId;
+  userId: Types.ObjectId;
   userName: string;
   title: string;
   subTitle?: string;
@@ -44,8 +44,8 @@ export interface GameInterface {
 }
 
 export interface IPendingGameUpdate {
-  gameId: string;
-  userId: string;
+  gameId: Types.ObjectId;
+  userId: Types.ObjectId;
   title?: string;
   subTitle?: string;
   description?: string;

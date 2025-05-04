@@ -46,21 +46,21 @@ router.post(
 
 router.get(
   '/getAllGame',
-  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  auth(USER_ROLE.USER),
   GameController.getAllGame,
 );
 
 router.get(
   '/top-game/day',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  validationRequest(GameValidationSchema.TopGameQuerySchema),
+  // validationRequest(GameValidationSchema.TopGameQuerySchema),
   GameController.getTopGameOfDay,
 );
 
 router.get(
   '/top-game/week',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  validationRequest(GameValidationSchema.TopGameQuerySchema),
+  // validationRequest(GameValidationSchema.TopGameQuerySchema),
   GameController.getTopGameOfWeek,
 );
 

@@ -9,7 +9,7 @@ export type TSignup = {
 };
 
 export interface IUser {
-  id?: string;
+  // id?: Types.ObjectId;
   name?: string;
   userName?: string;
   email: string;
@@ -25,7 +25,7 @@ export interface IUser {
 }
 
 export interface IUserUpdate {
-  id?: string;
+  userId?: Types.ObjectId;
   name?: string;
   userName?: string;
   bio?: string;
@@ -36,7 +36,7 @@ export interface IUserUpdate {
 }
 
 export interface IPendingUserUpdate {
-  id: string;
+  userId: Types.ObjectId;
   name?: string;
   userName?: string;
   bio?: string;

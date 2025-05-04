@@ -8,7 +8,7 @@ import sendResponse from '../../utility/sendResponse';
 import { verify } from 'jsonwebtoken';
 
 const loginUser: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AuthServices.loginUserIntoDb(req.body);
+  const result = await AuthServices.loginUserIntoDb(req.body.data);
 
   const { refreshToken, accessToken } = result;
   res.cookie('refreshToken', refreshToken, {
