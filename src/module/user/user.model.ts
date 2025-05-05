@@ -1,10 +1,10 @@
-import { Model, Schema, Types, model } from 'mongoose';
+import { Model, Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
 import config from '../../app/config';
 import { USER_ROLE } from './user.constant';
 import { IUser, IUserModel } from './user.interface';
 import { linksRegex } from '../../constants/regex.constants';
-import { boolean } from 'zod';
+
 
 const userSchema = new Schema<IUser, IUserModel>(
   {
@@ -25,6 +25,7 @@ const userSchema = new Schema<IUser, IUserModel>(
     email: {
       type: String,
       required: [true, 'Email is Required'],
+      unique:true,
     },
     password: {
       type: String,
@@ -41,12 +42,17 @@ const userSchema = new Schema<IUser, IUserModel>(
       required: [false, 'Bio is not require'],
     },
     links: {
-      type: [String],
+      type: [
+        {
+          name: { type: String, required: true },
+          link: { type: String, required: true },
+        },
+      ],
       required: [false, 'Links are not required'],
       default: [],
       validate: {
-        validator: (links: string[]) =>
-          links.every((link) => linksRegex.test(link)),
+        validator: (links: { name: string; link: string }[]) =>
+          links.every((item) => linksRegex.test(item.link)),
         message: 'Each link must be a valid URL',
       },
     },
@@ -76,6 +82,43 @@ const userSchema = new Schema<IUser, IUserModel>(
         default: [],
       },
     ],
+    upVotedComment: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Game',
+        required: false,
+        default: [],
+      },
+    ],
+    commentedGame: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Game',
+        required: false,
+        default: [],
+      },
+    ],
+    comments: {
+      type: [
+        {
+          gameId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Game',
+            required: false,
+          },
+          comment: {
+            type: String,
+            required: false,
+          },
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        }
+      ],
+      required: false,
+      default: [],
+    },
     isDeleted: {
       type: Boolean,
       default: false,

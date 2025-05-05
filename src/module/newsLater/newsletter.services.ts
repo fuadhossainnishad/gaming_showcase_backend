@@ -2,24 +2,30 @@ import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import QueryBuilder from '../../app/builder/QueryBuilder';
 import NewsLetter from './newsletter.model';
+import { idConverter } from '../../utility/idCoverter';
 
 type TNewsLater = {
   email: string;
 };
 
-export const addNewsletterMail = async (payload: TNewsLater) => {
+export const addNewsletterMail = async (userId: string, payload: TNewsLater) => {
   try {
     console.log(payload);
     const { email } = payload;
+    console.log(userId);
+
+    const userIdObject = await idConverter(userId)
+
     const isExist = await NewsLetter.findOne({
       email,
       isDeleted: { $ne: true },
     });
+
     if (isExist) {
       throw new AppError(httpStatus.FORBIDDEN, 'Mail already exist', '');
     }
-    const addNewsletterMailBuilder = new NewsLetter(payload);
-    // console.log(addNewsLaterMailBuilder);
+    const addNewsletterMailBuilder = new NewsLetter({ userId: userIdObject, email: email });
+    console.log(addNewsletterMailBuilder);
     const result = await addNewsletterMailBuilder.save();
     return (
       result && { status: true, message: 'successfully add newsletter email' }
@@ -87,7 +93,9 @@ const deleteNewsletterIntoDB = async (newsletterId: string) => {
   if (!newsletterId) {
     throw new AppError(httpStatus.NOT_FOUND, 'Invalid newsletter Id', '');
   }
-  const deleteOne = await NewsLetter.deleteOne({ id: newsletterId });
+
+  const newletterIdObject = await idConverter(newsletterId)
+  const deleteOne = await NewsLetter.deleteOne({ _id: newletterIdObject });
 
   return deleteOne;
 };

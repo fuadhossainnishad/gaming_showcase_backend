@@ -4,7 +4,7 @@ import { IForgotPassword } from './auth.interface';
 const forgotPasswordSchema = new Schema<IForgotPassword>(
   {
     userId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: [false, 'User ID is not required'],
     },
     email: {
@@ -23,6 +23,17 @@ const forgotPasswordSchema = new Schema<IForgotPassword>(
   },
   { timestamps: true },
 );
+
+forgotPasswordSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.password;
+    return ret;
+  },
+});
 
 const ForgotPassword = model<IForgotPassword>(
   'ForgotPassword',

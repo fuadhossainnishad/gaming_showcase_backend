@@ -26,7 +26,11 @@ const loginUser: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const requestForgotPassword: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AuthServices.requestForgotPassword(req.body.email);
+
+  console.log(req.body.data?.email!);
+
+  const result = await AuthServices.requestForgotPassword(req.body.data?.email!);
+
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -36,7 +40,7 @@ const requestForgotPassword: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const verifyForgotPassword: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AuthServices.verifyForgotPassword(req.body);
+  const result = await AuthServices.verifyForgotPassword(req.body.data);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -46,7 +50,7 @@ const verifyForgotPassword: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const updateUserPassword: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AuthServices.updateUserPassword(req.body);
+  const result = await AuthServices.updateUserPassword(req.body.data);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

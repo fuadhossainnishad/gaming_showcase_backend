@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export type TAuth = {
     email: string;
     password: string;
@@ -14,7 +16,7 @@ export type TVerifyForgotPassword = {
 };
 
 export type TUpdateUserPassword = {
-  userId: string;
+  userId: Types.ObjectId;
   password: string;
   newPassword: string;
 };

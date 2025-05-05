@@ -8,8 +8,7 @@ import GameController from './game.controller';
 
 const router = express.Router();
 
-router.post(
-  '/upload_game',
+router.post('/upload_game',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   uploadGames.fields([
     { name: 'image', maxCount: 5 },
@@ -19,8 +18,7 @@ router.post(
   GameController.createNewGame,
 );
 
-router.patch(
-  '/update_game',
+router.patch('/update_game',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   uploadGames.fields([
     { name: 'image', maxCount: 5 },
@@ -30,35 +28,40 @@ router.patch(
   GameController.updateGame,
 );
 
-router.post(
-  '/comment',
+router.post('/comment',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   validationRequest(GameValidationSchema.CommentSchema),
   GameController.addComment,
 );
 
-router.post(
-  '/share',
+router.post('/share',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   validationRequest(GameValidationSchema.ShareSchema),
   GameController.addShare,
 );
 
-router.get(
-  '/getAllGame',
+router.get('/getAllGame',
   auth(USER_ROLE.USER),
   GameController.getAllGame,
 );
 
-router.get(
-  '/top-game/day',
+router.get('/getUpcomingGame',
+  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
+  GameController.getUpcomingGame,
+);
+
+router.get('/getSimilarGame',
+  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
+  GameController.getSimilarGame,
+);
+
+router.get('/top-game/day',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   // validationRequest(GameValidationSchema.TopGameQuerySchema),
   GameController.getTopGameOfDay,
 );
 
-router.get(
-  '/top-game/week',
+router.get('/top-game/week',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   // validationRequest(GameValidationSchema.TopGameQuerySchema),
   GameController.getTopGameOfWeek,

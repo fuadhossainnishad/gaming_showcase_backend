@@ -5,12 +5,12 @@ import { IPendingGameUpdate } from './blog.interface';
 const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
   {
     userId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: [true, 'User ID is required'],
       ref: 'User',
     },
     gameId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: [false, 'Game ID is not required'],
       ref: 'Games',
     },

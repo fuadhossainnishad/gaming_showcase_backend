@@ -4,7 +4,7 @@ import config from '../app/config';
 const gameMediaUrl = (filePath: string, userId: string): string => {
   const fileName = path.basename(filePath);
   const relativePath = path
-    .join('src','uploads', userId, 'games', fileName)
+    .join('src', 'uploads', userId, 'games', fileName)
     .replace(/\\/g, '/');
   const baseUrl = config.base_url;
   const fileUrl = `${baseUrl}/${relativePath}`;
@@ -14,7 +14,7 @@ const gameMediaUrl = (filePath: string, userId: string): string => {
 const profileMediaUrl = (filePath: string, userId: string): string => {
   const fileName = path.basename(filePath);
   const relativePath = path
-    .join('src','uploads', userId, 'profile', fileName)
+    .join('src', 'uploads', userId, 'profile', fileName)
     .replace(/\\/g, '/');
   const baseUrl = config.base_url;
   const fileUrl = `${baseUrl}/${relativePath}`;
@@ -24,7 +24,7 @@ const profileMediaUrl = (filePath: string, userId: string): string => {
 const adminMediaUrl = (filePath: string): string => {
   const fileName = path.basename(filePath);
   const relativePath = path
-    .join('src','uploads', 'admin', fileName)
+    .join('src', 'uploads', 'admin', fileName)
     .replace(/\\/g, '/');
   const baseUrl = config.base_url;
   const fileUrl = `${baseUrl}/${relativePath}`;

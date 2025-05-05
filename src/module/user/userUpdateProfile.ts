@@ -23,12 +23,17 @@ const pendingUserUpdateSchema = new Schema<IPendingUserUpdate>(
       required: false,
     },
     links: {
-      type: [String],
-      required: false,
+      type: [
+        {
+          name: { type: String, required: true },
+          link: { type: String, required: true },
+        },
+      ],
+      required: [false, 'Links are not required'],
       default: [],
       validate: {
-        validator: (links: string[]) =>
-          links.every((link) => linksRegex.test(link)),
+        validator: (links: { name: string; link: string }[]) =>
+          links.every((item) => linksRegex.test(item.link)),
         message: 'Each link must be a valid URL',
       },
     },
@@ -53,6 +58,16 @@ const pendingUserUpdateSchema = new Schema<IPendingUserUpdate>(
   },
   { timestamps: true },
 );
+
+pendingUserUpdateSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: (_doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    return ret;
+  },
+});
 
 const PendingUserUpdate = model<IPendingUserUpdate>(
   'PendingUserUpdate',

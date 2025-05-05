@@ -15,8 +15,7 @@ export interface SocialLinksInterface {
 }
 
 export interface GameInterface {
-  id: string;
-  userId: string;
+  userId: Types.ObjectId;
   author: string;
   title: string;
   subTitle?: string;
@@ -38,8 +37,8 @@ export interface GameInterface {
 }
 
 export interface IPendingGameUpdate {
-  gameId: string;
-  userId: string;
+  gameId: Types.ObjectId;
+  userId: Types.ObjectId;
   title?: string;
   subTitle?: string;
   description?: string;

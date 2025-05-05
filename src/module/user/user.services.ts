@@ -15,6 +15,7 @@ import AppError from '../../app/error/AppError';
 import PendingUserUpdate from './userUpdateProfile';
 import MediaUrl from '../../utility/game.media';
 import { idConverter } from '../../utility/idCoverter';
+import { SocialLinksInterface } from '../game/game.interface';
 
 const createUserIntoDb = async (payload: TSignup) => {
   try {
@@ -74,7 +75,10 @@ const userProfile = async (userId: string) => {
   if (!userId) {
     throw new AppError(httpStatus.NO_CONTENT, 'Invalid userId', '');
   }
-  const findUser = await User.findOne({ _id: userId })
+  const userIdObject = await idConverter(userId)
+
+
+  const findUser = await User.findById(userIdObject)
     .populate({
       path: 'uploadedGame',
       match: { isDelete: { $ne: true }, isApproved: true },
@@ -83,6 +87,12 @@ const userProfile = async (userId: string) => {
     })
     .populate({
       path: 'upVotedGame',
+      match: { isDelete: { $ne: true }, isApproved: true },
+      select:
+        'id title thumbnail categories price gameStatus totalUpvote totalComments',
+    })
+    .populate({
+      path: 'upVotedComment',
       match: { isDelete: { $ne: true }, isApproved: true },
       select:
         'id title thumbnail categories price gameStatus totalUpvote totalComments',
@@ -104,7 +114,9 @@ const updateUserProfileIntoDb = async (
   session.startTransaction();
 
   try {
-    const { ...updateFields } = payload;
+
+    const { links, ...updateFields } = payload;
+    let parsedLinks: SocialLinksInterface[] | undefined = links;
 
     console.log('file:', file?.path);
 
@@ -127,8 +139,10 @@ const updateUserProfileIntoDb = async (
     //   );
     // }
 
+    const userIdObject = await idConverter(userId)
+
     const existingUser = await User.findOne({
-      userId: userId,
+      _id: userIdObject,
       isDeleted: { $ne: true },
     });
     // { $set: updateFields },
@@ -157,8 +171,9 @@ const updateUserProfileIntoDb = async (
     console.log('photoPath:', photoPath);
 
     const pendingUserUpdateData: Partial<IPendingUserUpdate> = {
-      userId: await idConverter(userId),
+      userId: userIdObject,
       ...updateFields,
+      links: parsedLinks,
       photo: photoPath,
       status: 'pending',
     };

@@ -54,6 +54,42 @@ const getAllGame: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getUpcomingGame: RequestHandler = catchAsync(async (req, res) => {
+  if (!req.user) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Accessor is not authenticated',
+      '',
+    );
+  }
+  const result = await GameServices.getUpcomingGame(req.query, req.user.role);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully retrieved upcoming games',
+    data: result,
+  });
+});
+
+const getSimilarGame: RequestHandler = catchAsync(async (req, res) => {
+  if (!req.user) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Accessor is not authenticated',
+      '',
+    );
+  }
+  const result = await GameServices.getSimilarGame(req.query, req.user.role);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully retrieved upcoming games',
+    data: result,
+  });
+});
+
 const addComment: RequestHandler = catchAsync(async (req, res) => {
   // console.log(req.body.body);
   // console.log(req.user);
@@ -137,6 +173,8 @@ const updateGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
 const GameController = {
   createNewGame,
   getAllGame,
+  getUpcomingGame,
+  getSimilarGame,
   addComment,
   addShare,
   getTopGameOfDay,

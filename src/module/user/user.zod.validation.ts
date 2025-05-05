@@ -46,27 +46,31 @@ const userSignInValidation = z.object({
 const userProfileUpdateValidation = z.object({
   body: z
     .object({
-      name: z
-        .string({ required_error: 'Name is required' })
-        .min(1, 'Name is required')
-        .optional(),
-      userName: z.string().optional(),
-      bio: z.string().optional(),
-      links: z
-        .array(
-          z
-            .string()
-            .url('Each link must be a valid URL')
-            .regex(linksRegex, 'Each link must match the allowed format'),
-        )
-        .max(5, 'Maximum 5 links are allowed')
-        .refine((links) => new Set(links).size === links.length, {
-          message: 'Links must be unique',
-        })
-        .optional(),
-      photo: z.string().optional(),
+      data: z.object({
+        name: z
+          .string({ required_error: 'Name is required' })
+          .min(1, 'Name is required')
+          .optional(),
+        userName: z.string().optional(),
+        bio: z.string().optional(),
+        links: z
+          .array(
+            z.object({
+              name: z.string().min(1, 'Link name is required'),
+              link: z
+                .string()
+                .url('Each link must be a valid URL')
+                .regex(linksRegex, 'Each link must match the allowed format'),
+            }),
+          )
+          .max(5, 'Maximum 5 links are allowed')
+          .refine((links) => new Set(links.map((l) => l.link)).size === links.length, {
+            message: 'Links must be unique',
+          })
+          .optional(),
+      }).optional(),
     })
-    .strict({ message: 'Only name, bio, links, and photo are allowed' })
+    // .strict({ message: 'Only name,username, bio, links are allowed' })
     .refine(
       (data) => Object.keys(data).length > 0,
       'At least one field must be provided for update',

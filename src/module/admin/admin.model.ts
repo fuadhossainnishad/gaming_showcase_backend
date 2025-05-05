@@ -3,6 +3,7 @@ import { IAdmin } from './admin.interface';
 import { USER_ROLE } from '../user/user.constant';
 import bcrypt from 'bcrypt';
 import config from '../../app/config';
+
 const AdminSchema = new Schema<IAdmin>(
   {
     name: {

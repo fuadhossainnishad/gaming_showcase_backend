@@ -6,6 +6,9 @@ import config from '../../app/config';
 import { jwtHelpers } from '../../app/jwtHalpers/jwtHalpers';
 import ForgotPassword from './auth.model';
 import bcrypt from 'bcrypt'
+import { sendMail } from '../../app/mailer/sendMail';
+import { emailRegex } from '../../constants/regex.constants';
+import { idConverter } from '../../utility/idCoverter';
 
 const loginUserIntoDb = async (payload: TAuth) => {
   console.log(payload);
@@ -53,6 +56,12 @@ const loginUserIntoDb = async (payload: TAuth) => {
 };
 
 const requestForgotPassword = async (email: string) => {
+
+  console.log("email: ", email);
+
+  if (!emailRegex.test(email)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid email format', '');
+  }
   const user = await User.findOne({ email });
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
@@ -63,11 +72,37 @@ const requestForgotPassword = async (email: string) => {
 
   await ForgotPassword.deleteMany({ email });
 
-  await ForgotPassword.create({
-    email,
-    otp,
-    expiresAt,
-  });
+  const subject = 'forgote password'
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2>Password Reset Request</h2>
+      <p>Use the following OTP to reset your password:</p>
+      <h3 style="background: #f0f0f0; padding: 10px; display: inline-block;">${otp}</h3>
+      <p>This code expires in 10 minutes.</p>
+      <p>If you didn't request this, please ignore this email.</p>
+    </div>
+  `;
+
+  try {
+    await sendMail(email, subject, html);
+
+    const result = await ForgotPassword.create({
+      email,
+      otp,
+      expiresAt,
+    });
+
+    return {
+      email: result.email,
+      expiresAt: result.expiresAt,
+    };
+  } catch (error) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to process password reset request',
+      error as any
+    );
+  }
 };
 
 const verifyForgotPassword = async (payload: TVerifyForgotPassword) => {
@@ -107,8 +142,13 @@ const verifyForgotPassword = async (payload: TVerifyForgotPassword) => {
 };
 
 const updateUserPassword = async (payload: TUpdateUserPassword) => {
+
+  const { userId, password, newPassword } = payload
+  console.log(userId);
+
+  const userIdObject = await idConverter(userId!)
   const user = await User.findOne(
-    { userId: payload.userId, isDeleted: { $ne: true } },
+    { _id: userIdObject, isDeleted: { $ne: true } },
     { password: 1, email: 1 },
   );
 
@@ -117,7 +157,7 @@ const updateUserPassword = async (payload: TUpdateUserPassword) => {
   }
 
   const isPasswordValid = await User.isPasswordMatched(
-    payload.password,
+    password,
     user.password,
   );
 
@@ -126,12 +166,12 @@ const updateUserPassword = async (payload: TUpdateUserPassword) => {
   }
 
   const hashedNewPassword = await bcrypt.hash(
-    payload.newPassword,
+    newPassword,
     Number(config.bcrypt_salt_rounds),
   );
 
   const updatedUser = await User.findOneAndUpdate(
-    { userId: payload.userId, isDeleted: { $ne: true } },
+    { _id: userIdObject, isDeleted: { $ne: true } },
     { password: hashedNewPassword },
     { new: true },
   ).select('-password');

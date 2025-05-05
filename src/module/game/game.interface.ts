@@ -1,12 +1,29 @@
 import { Model, Types } from 'mongoose';
 
+export interface UpvoteInterface {
+  userId: Types.ObjectId
+  createdAt: Date
+}
+
+export interface ReportInterface {
+  userId: Types.ObjectId
+  reportData: string
+  createdAt: Date
+}
+
 export interface CommentsInterface {
   userId: Types.ObjectId;
   comment: string;
+  commentTime: Date
+  upvote: UpvoteInterface[]
+  totalUpvote: number
+  report: ReportInterface[]
+  createdAt: Date
 }
 
 export interface ShareInterface {
   userId: Types.ObjectId;
+  createdAt: Date
 }
 
 export interface SocialLinksInterface {
@@ -33,7 +50,7 @@ export interface GameInterface {
   socialLinks: SocialLinksInterface[];
   gameStatus: 'active' | 'upcoming';
   upcomingDate: Date;
-  upvote: Upvote[];
+  upvote: UpvoteInterface[];
   totalUpvote: number;
   comments: CommentsInterface[];
   totalComments: number;

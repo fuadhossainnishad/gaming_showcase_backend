@@ -5,27 +5,24 @@ import AuthController from './auth.controller';
 
 const router = express.Router();
 
-router.post(
-  '/login',
+router.post('/login',
   validationRequest(AuthValidationSchema.userSignInValidation),
   AuthController.loginUser,
 );
-router.post(
-  '/forgot_password',
+router.post('/forgot_password',
   validationRequest(AuthValidationSchema.forgotPasswordValidation),
   AuthController.requestForgotPassword,
 );
 
-router.post(
-  '/verify_forgot_password',
+router.post('/verify_forgot_password',
   validationRequest(AuthValidationSchema.verifyForgotPasswordValidation),
   AuthController.verifyForgotPassword,
 );
-router.patch(
-  '/update-password',
+router.patch('/update-password',
   validationRequest(AuthValidationSchema.updateUserPasswordValidation),
   AuthController.updateUserPassword,
 );
+
 const AuthRouter = router;
 
 export default AuthRouter;

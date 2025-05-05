@@ -1,12 +1,19 @@
 import { Model, Types } from 'mongoose';
 import { USER_ROLE } from './user.constant';
-import { GameInterface } from '../game/game.interface';
+import { GameInterface, SocialLinksInterface } from '../game/game.interface';
+import { string } from 'zod';
 
 export type TSignup = {
   name: string;
   email: string;
   password: string;
 };
+
+export interface CommentInterface {
+  gameId: Types.ObjectId
+  comment: string
+  createdAt: Date
+}
 
 export interface IUser {
   // id?: Types.ObjectId;
@@ -16,11 +23,14 @@ export interface IUser {
   password: string;
   role: string;
   bio?: string;
-  links?: string[];
+  links?: SocialLinksInterface[];
   photo?: string;
   approvedUpdate: boolean;
   uploadedGame?: GameInterface[];
   upVotedGame: GameInterface[];
+  upVotedComment: GameInterface[];
+  commentedGame: GameInterface[]
+  comments: CommentInterface[]
   isDeleted?: boolean;
 }
 
@@ -29,7 +39,7 @@ export interface IUserUpdate {
   name?: string;
   userName?: string;
   bio?: string;
-  links?: string[];
+  links?: SocialLinksInterface[];
   photo?: string;
   approvedUpdate?: boolean;
   isDeleted?: boolean;
@@ -40,7 +50,7 @@ export interface IPendingUserUpdate {
   name?: string;
   userName?: string;
   bio?: string;
-  links?: string[];
+  links?: SocialLinksInterface[];
   photo?: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: Date;

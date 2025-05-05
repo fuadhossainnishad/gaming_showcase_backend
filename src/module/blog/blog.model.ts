@@ -10,7 +10,7 @@ import { gameCategory } from './blog.constant';
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
   {
     userId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },

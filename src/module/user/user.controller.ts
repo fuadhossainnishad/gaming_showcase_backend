@@ -28,13 +28,12 @@ const findAllUser: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const userProfile: RequestHandler = catchAsync(async (req, res) => {
-  console.log(req.user?.userId);
-
-  const result = await UserServices.userProfile(req.user?.userId);
+  console.log("userId", typeof req.user?.id);
+  const result = await UserServices.userProfile(req.user?.id!);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'successfully find all user',
+    message: 'successfully user profile',
     data: result,
   });
 });
@@ -44,30 +43,23 @@ const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
     throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
   }
   // console.log(req.body);
-  console.log(req.user?.id);
-  let links = req.body.links;
-  if (typeof links === 'string') {
-    try {
-      links = JSON.parse(links);
-    } catch {
-      links = undefined;
-    }
-  }
+  console.log("userId", req.user?.id);
 
-  const payload: IUserUpdate = {
-    name: req.body.name,
-    bio: req.body.bio,
-    links,
-  };
+  // const payload: IUserUpdate = {
+  //   name: req.body.name,
+  //   bio: req.body.bio,
+  //   links,
+  // };
+
   const result = await UserServices.updateUserProfileIntoDb(
-    req.user!.id as string,
-    payload,
+    req.user?.id!,
+    req.body.data,
     req.file,
   );
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'successfully updated user profile',
+    message: 'successfully sent to admin for updating user profile',
     data: result,
   });
 });

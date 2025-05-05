@@ -1,5 +1,7 @@
+import { Types } from "mongoose";
+
 export interface IForgotPassword {
-  userId: string;
+  userId: Types.ObjectId;
   email: string;
   otp: string;
   expiresAt: Date;

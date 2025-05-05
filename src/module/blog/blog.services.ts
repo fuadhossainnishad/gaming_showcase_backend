@@ -16,6 +16,7 @@ import PendingGameUpdate from './blogUpdate.model';
 import { GameInterface, IPendingGameUpdate } from './blog.interface';
 import mongoose from 'mongoose';
 import MediaUrl from '../../utility/game.media';
+import { idConverter } from '../../utility/idCoverter';
 
 const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   console.log('createNewGameIntoDb - Request Details:', {
@@ -76,8 +77,7 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   }
 
   const gameData: GameInterface = {
-    id: new mongoose.Types.ObjectId().toString(),
-    userId: userId,
+    userId:await idConverter(userId),
     author: data.author || 'Unknown',
     title: data.title,
     subTitle: data.subTitle || '',
@@ -392,7 +392,7 @@ const updateGameIntoDb = async (
     );
   }
 
-  if (game.userId !== data.userId) {
+  if (game.userId.toString() !== data.userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'You can only update your own games',
@@ -424,8 +424,8 @@ const updateGameIntoDb = async (
     : image?.thumbnail || '';
 
   const pendingUpdateData: Partial<IPendingGameUpdate> = {
-    gameId: data.gameId,
-    userId: data.userId,
+    gameId:await idConverter(data.gameId),
+    userId:await idConverter(data.userId),
     title: data.title,
     subTitle: data.subTitle,
     description: data.description,

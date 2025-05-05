@@ -16,6 +16,7 @@ import PendingGameUpdate from './gameUpdate.model';
 import { GameInterface, IPendingGameUpdate, Upvote } from './game.interface';
 import mongoose from 'mongoose';
 import MediaUrl from '../../utility/game.media';
+import { idConverter } from '../../utility/idCoverter';
 
 const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   console.log('createNewGameIntoDb - Request Details:', {
@@ -159,6 +160,114 @@ const getAllGameIntoDb = async (
   }
 };
 
+const getUpcomingGame = async (query: Record<string, unknown>,
+  role: UserRole) => {
+  try {
+    console.log("query: ", query)
+    if (!Object.values(USER_ROLE).includes(role)) {
+      throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
+    }
+
+    const filter: Record<string, any> = { gameStatus: 'upcoming' };
+    if (role !== USER_ROLE.ADMIN) {
+      filter.isApproved = true;
+    }
+
+    const baseQuery = games.find(filter)
+      .populate('userId')
+
+    // if (role !== USER_ROLE.ADMIN) {
+    //   baseQuery.where({ isApproved: true });
+    // }
+
+    const gameQuery = new QueryBuilder(baseQuery, query)
+      .search(['title', 'description'])
+      .filter()
+      .sort()
+      .pagination()
+      .fields();
+
+    const allGames = await gameQuery.modelQuery;
+    const meta = await gameQuery.countTotal();
+
+    return { meta, allGames };
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to retrieve games',
+      '',
+    );
+  }
+
+}
+
+const getSimilarGame = async (query: Record<string, unknown>,
+  role: UserRole) => {
+  try {
+    console.log("query: ", query)
+    const { gameId } = query
+    const gameIdObject = await idConverter(gameId as string)
+
+    console.log("gameId: ", gameIdObject)
+
+    if (!gameId) {
+      throw new AppError(httpStatus.NOT_FOUND, 'GameId is required', '')
+    }
+
+    if (!Object.values(USER_ROLE).includes(role)) {
+      throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
+    }
+
+
+    const currentGame = await games.findById(gameIdObject!);
+    if (!currentGame) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
+    }
+
+    const price = currentGame.price || 0;
+    const lowerBound = price * 0.8;
+    const upperBound = price * 1.2;
+
+    const filter: Record<string, any> = {
+      _id: { $ne: gameIdObject },
+      // gameStatus: 'active',
+      price: { $gte: lowerBound, $lte: upperBound },
+      $or: [
+        { type: currentGame.platform },
+        { category: currentGame.categories },
+      ]
+    };
+
+    if (role !== USER_ROLE.ADMIN) {
+      filter.isApproved = true;
+    }
+    const baseQuery = games.find(filter)
+      .populate('gameId')
+
+    // if (role !== USER_ROLE.ADMIN) {
+    //   baseQuery.where({ isApproved: true });
+    // }
+
+    const gameQuery = new QueryBuilder(baseQuery, query)
+      .search(['title', 'description'])
+      .filter()
+      .sort()
+      .pagination()
+      .fields();
+
+    const allGames = await gameQuery.modelQuery;
+    const meta = await gameQuery.countTotal();
+
+    return { meta, allGames };
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to retrieve games',
+      '',
+    );
+  }
+}
+
 const userComment = async (payload: CommentPayload, userId: string) => {
   try {
     const { gameId, comment } = payload;
@@ -275,93 +384,187 @@ const userShare = async (payload: SharePayload, userId: string) => {
   }
 };
 
-const getTopGameOfDay = async (query: TopGameQuery) => {
+
+export const getTopGameOfDay = async (query: TopGameQuery) => {
   try {
     const { limit = 10 } = query;
     const start = startOfDay(new Date());
     const end = endOfDay(new Date());
 
-    const topGames = await games
-      .aggregate([
-        {
-          $match: {
-            isDelete: { $ne: true },
-            isApproved: true,
-            createdAt: { $gte: start, $lte: end },
-          },
+    const topGames = await games.aggregate([
+      {
+        $match: {
+          isDelete: { $ne: true },
+          isApproved: true,
         },
-        {
-          $addFields: {
-            popularityScore: { $add: ['$totalComments', '$totalShare'] },
+      },
+      {
+        $addFields: {
+          todayComments: {
+            $size: {
+              $filter: {
+                input: { $ifNull: ['$comments', []] },
+                as: 'comment',
+                cond: {
+                  $and: [
+                    { $gte: ['$$comment.createdAt', start] },
+                    { $lte: ['$$comment.createdAt', end] }
+                  ]
+                }
+              }
+            }
           },
-        },
-        { $sort: { popularityScore: -1, createdAt: -1 } },
-        { $limit: limit },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'userId',
-            foreignField: '_id',
-            as: 'userId',
+          todayShares: {
+            $size: {
+              $filter: {
+                input: { $ifNull: ['$shares', []] },
+                as: 'share',
+                cond: {
+                  $and: [
+                    { $gte: ['$$share.createdAt', start] },
+                    { $lte: ['$$share.createdAt', end] }
+                  ]
+                }
+              }
+            }
           },
-        },
-        { $unwind: '$userId' },
-      ])
-      .exec();
+          todayUpvotes: {
+            $size: {
+              $filter: {
+                input: { $ifNull: ['$upvote', []] },
+                as: 'vote',
+                cond: {
+                  $and: [
+                    { $gte: ['$$vote.createdAt', start] },
+                    { $lte: ['$$vote.createdAt', end] }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          popularityScore: {
+            $add: ['$todayComments', '$todayShares', '$todayUpvotes']
+          }
+        }
+      },
+      { $sort: { popularityScore: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'userId'
+        }
+      },
+      { $unwind: '$userId' }
+    ]);
 
     return topGames;
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to retrieve top games of the day',
-      '',
+      ''
     );
   }
 };
 
-const getTopGameOfWeek = async (query: TopGameQuery) => {
+
+export const getTopGameOfWeek = async (query: TopGameQuery) => {
   try {
     const { limit = 10 } = query;
     const start = startOfWeek(new Date(), { weekStartsOn: 1 });
     const end = endOfWeek(new Date(), { weekStartsOn: 1 });
 
-    const topGames = await games
-      .aggregate([
-        {
-          $match: {
-            isDelete: { $ne: true },
-            isApproved: true,
-            createdAt: { $gte: start, $lte: end },
-          },
+    const topGames = await games.aggregate([
+      {
+        $match: {
+          isDelete: { $ne: true },
+          isApproved: true,
         },
-        {
-          $addFields: {
-            popularityScore: { $add: ['$totalComments', '$totalShare'] },
+      },
+      {
+        $addFields: {
+          weekComments: {
+            $size: {
+              $filter: {
+                input: { $ifNull: ['$comments', []] },  // Handle null values
+                as: 'comment',
+                cond: {
+                  $and: [
+                    { $gte: ['$$comment.createdAt', start] },
+                    { $lte: ['$$comment.createdAt', end] }
+                  ]
+                }
+              }
+            }
           },
-        },
-        { $sort: { popularityScore: -1, createdAt: -1 } },
-        { $limit: limit },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'userId',
-            foreignField: '_id',
-            as: 'userId',
+          weekShares: {
+            $size: {
+              $filter: {
+                input: { $ifNull: ['$shares', []] },  // Handle null values
+                as: 'share',
+                cond: {
+                  $and: [
+                    { $gte: ['$$share.createdAt', start] },
+                    { $lte: ['$$share.createdAt', end] }
+                  ]
+                }
+              }
+            }
           },
-        },
-        { $unwind: '$userId' },
-      ])
-      .exec();
+          weekUpvotes: {
+            $size: {
+              $filter: {
+                input: { $ifNull: ['$upvote', []] },  // Handle null values
+                as: 'vote',
+                cond: {
+                  $and: [
+                    { $gte: ['$$vote.createdAt', start] },
+                    { $lte: ['$$vote.createdAt', end] }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          popularityScore: {
+            $add: ['$weekComments', '$weekShares', '$weekUpvotes']
+          }
+        }
+      },
+      { $sort: { popularityScore: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'userId'
+        }
+      },
+      { $unwind: '$userId' }
+    ]);
 
     return topGames;
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to retrieve top games of the week',
-      '',
+      ''
     );
   }
 };
+
+
 
 const updateGameIntoDb = async (
   id: string,
@@ -450,6 +653,8 @@ const updateGameIntoDb = async (
 const GameServices = {
   createNewGameIntoDb,
   getAllGameIntoDb,
+  getUpcomingGame,
+  getSimilarGame,
   userComment,
   userShare,
   getTopGameOfDay,

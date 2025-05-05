@@ -15,9 +15,16 @@ router.post(
   UserController.createUser,
 );
 
-router.get('/find_all_users', UserController.findAllUser);
+router.get(
+  '/find_all_users',
+  UserController.findAllUser
+);
 
-router.get('/user-profile', auth(USER_ROLE.USER), UserController.userProfile);
+router.get(
+  '/user-profile',
+  auth(USER_ROLE.USER),
+  UserController.userProfile
+);
 
 router.patch(
   '/update_profile',
@@ -26,6 +33,7 @@ router.patch(
   validationRequest(userValidation.userProfileUpdateValidation),
   UserController.updateProfileUser,
 );
+
 // router.post(
 //   '/profile/update',
 //   verifyToken,
