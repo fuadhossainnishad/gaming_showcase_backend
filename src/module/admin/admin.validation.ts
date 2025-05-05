@@ -56,13 +56,23 @@ const deleteUserValidationSchema = z.object({
     })
 });
 
+const deleteGameValidationSchema = z.object({
+  body: z
+    .object({
+      data: z.object({
+        gameId: z.string({ required_error: 'Game iD is required' }),
+      })
+    })
+});
+
 const AdminValidationSchema = {
   approveGameValidation,
   approveGameUpdateValidation,
   rejectGameUpdateValidation,
   approveProfileUpdateValidation,
   rejectProfileUpdateValidation,
-  deleteUserValidationSchema
+  deleteUserValidationSchema,
+  deleteGameValidationSchema
 };
 
 export default AdminValidationSchema;

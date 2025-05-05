@@ -1,7 +1,8 @@
 import mongoose, { Schema, Types, model } from 'mongoose';
 import { gameCategory } from './game.constant';
-import { IPendingGameUpdate } from './game.interface';
+import { GameInterface, IPendingGameUpdate } from './game.interface';
 import { types } from 'util';
+import { linksRegex } from '../../constants/regex.constants';
 
 const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
   {
@@ -12,8 +13,8 @@ const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
     },
     gameId: {
       type: Schema.Types.ObjectId,
-      required: [false, 'Game ID is not required'],
-      ref: 'Games',
+      required: [true, 'Game ID is required'],
+      ref: 'Game',
     },
     title: {
       type: String,
@@ -45,7 +46,7 @@ const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
       required: false,
     },
     price: {
-      type: String,
+      type: Number,
       required: false,
     },
     socialLinks: {
@@ -55,6 +56,21 @@ const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
           link: { type: String, required: true },
         },
       ],
+      required: false,
+    },
+    gameStatus: {
+      type: String,
+      enum: ['active', 'upcoming'],
+      default: 'active',
+    },
+    upcomingDate: {
+      type: Date,
+      validate: {
+        validator: function (this: IPendingGameUpdate) {
+          return this.gameStatus === 'upcoming' ? !!this.upcomingDate : true;
+        },
+        message: 'Upcoming date is required when gameStatus is upcoming',
+      },
       required: false,
     },
     status: {
@@ -67,7 +83,7 @@ const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
       default: Date.now,
     },
     reviewedBy: {
-      type: String,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: false,
     },
@@ -85,7 +101,6 @@ pendingGameUpdateSchema.set('toJSON', {
   transform: function (doc, ret) {
     ret.id = ret._id.toString();
     delete ret._id;
-    delete ret.password;
     return ret;
   },
 });

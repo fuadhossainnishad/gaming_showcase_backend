@@ -60,11 +60,18 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       ],
       required: true,
       default: [],
-      validate: {
-        validator: (links: { name: string; link: string }[]) =>
-          links.every((item) => linksRegex.test(item.link)),
-        message: 'Each link must be a valid URL',
-      },
+      validate: [
+        {
+          validator: (links: { name: string; link: string }[]) =>
+            links.length > 0,
+          message: 'At least one social link is required',
+        },
+        {
+          validator: (links: { name: string; link: string }[]) =>
+            links.every((item) => linksRegex.test(item.link)),
+          message: 'Each link must be a valid URL',
+        },
+      ],
     },
     gameStatus: {
       type: String,
@@ -87,15 +94,14 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
           userId: {
             type: Schema.Types.ObjectId,
             ref: 'User',
-            required: true,
+            required: false,
           },
           createdAt: {
             type: Date,
             default: () => new Date(),
           },
-        }
+        },
       ],
-      required: true,
       default: [],
     },
     totalUpvote: {
@@ -116,7 +122,7 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
           },
           commentTime: {
             type: Date,
-            default: () => new Date()
+            default: () => new Date(),
           },
           upvote: {
             type: [
@@ -130,7 +136,7 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
                   type: Date,
                   default: () => new Date(),
                 },
-              }
+              },
             ],
             default: [],
           },
@@ -148,22 +154,22 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
                 },
                 reportData: {
                   type: String,
-                  default: ""
+                  default: '',
                 },
                 createdAt: {
                   type: Date,
                   default: () => new Date(),
                 },
-              }
-            ]
+              },
+            ],
+            default: [],
           },
           createdAt: {
             type: Date,
             default: () => new Date(),
-          }
+          },
         },
       ],
-      requiried: false,
       default: [],
     },
     totalComments: {
@@ -180,12 +186,11 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
           },
         },
       ],
-      required: false,
       default: [],
     },
     totalShare: {
       type: Number,
-      default: 0
+      default: 0,
     },
     isApproved: {
       type: Boolean,
@@ -207,10 +212,13 @@ GameSchema.set('toJSON', {
   transform: (_doc, ret) => {
     ret.id = ret._id.toString();
     delete ret._id;
-    ret.userId = ret.userId?.toString();
+    if (ret.userId && !(ret.userId instanceof Object)) {
+      ret.userId = ret.userId.toString();
+    }
     ret.comments = ret.comments.map((comment: CommentsInterface) => ({
       ...comment,
       userId: comment.userId.toString(),
+      _id: comment._id?.toString(),
     }));
     ret.shares = ret.shares.map((share: ShareInterface) => ({
       ...share,
@@ -219,7 +227,6 @@ GameSchema.set('toJSON', {
     return ret;
   },
 });
-
 // Middleware
 GameSchema.pre('find', function (next) {
   this.where({ isDelete: { $ne: true } });
@@ -246,7 +253,6 @@ GameSchema.pre('findOne', function (next) {
 //   return this.shares?.length || 0;
 // });
 
-
 GameSchema.pre('save', function (next) {
   if (!this.id) {
     this.id = this._id.toString();
@@ -264,9 +270,6 @@ GameSchema.statics.isExistGame = async function (
   return game;
 };
 
-const Game = mongoose.model<GameInterface, CreateGameModel>(
-  'Game',
-  GameSchema,
-);
+const Game = mongoose.model<GameInterface, CreateGameModel>('Game', GameSchema);
 
 export default Game;

@@ -1,29 +1,30 @@
 import { Model, Types } from 'mongoose';
 
 export interface UpvoteInterface {
-  userId: Types.ObjectId
-  createdAt: Date
+  userId: Types.ObjectId;
+  createdAt: Date;
 }
 
 export interface ReportInterface {
-  userId: Types.ObjectId
-  reportData: string
-  createdAt: Date
+  userId: Types.ObjectId;
+  reportData: string;
+  createdAt: Date;
 }
 
 export interface CommentsInterface {
+  _id?: Types.ObjectId;
   userId: Types.ObjectId;
   comment: string;
-  commentTime: Date
-  upvote: UpvoteInterface[]
-  totalUpvote: number
-  report: ReportInterface[]
-  createdAt: Date
+  commentTime: Date;
+  upvote: UpvoteInterface[];
+  totalUpvote: number;
+  report: ReportInterface[];
+  createdAt: Date;
 }
 
 export interface ShareInterface {
   userId: Types.ObjectId;
-  createdAt: Date
+  createdAt: Date;
 }
 
 export interface SocialLinksInterface {
@@ -43,20 +44,20 @@ export interface GameInterface {
   subTitle?: string;
   description: string;
   image: string[];
-  thumbnail?: string;
+  thumbnail: string;
   categories: string[];
-  platform: string[];
+  platform?: string[];
   price: number;
   socialLinks: SocialLinksInterface[];
   gameStatus: 'active' | 'upcoming';
-  upcomingDate: Date;
-  upvote: UpvoteInterface[];
-  totalUpvote: number;
-  comments: CommentsInterface[];
-  totalComments: number;
-  shares: ShareInterface[];
-  totalShare: number;
-  isApproved: boolean;
+  upcomingDate?: Date;
+  upvote?: UpvoteInterface[];
+  totalUpvote?: number;
+  comments?: CommentsInterface[];
+  totalComments?: number;
+  shares?: ShareInterface[];
+  totalShare?: number;
+  isApproved?: boolean;
   isDelete?: boolean;
 }
 
@@ -72,11 +73,11 @@ export interface IPendingGameUpdate {
   platform?: string[];
   price?: number;
   socialLinks?: SocialLinksInterface[];
-  gameStatus: 'active' | 'upcoming';
-  upcomingDate: Date;
+  gameStatus?: 'active' | 'upcoming';
+  upcomingDate?: Date;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: Date;
-  reviewedBy?: string;
+  reviewedBy?: Types.ObjectId;
   reviewedAt?: Date;
 }
 

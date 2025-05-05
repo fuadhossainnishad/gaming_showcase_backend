@@ -3,6 +3,11 @@ export type CommentPayload = {
   comment: string;
 };
 
+export type CommentUpvotePayload = {
+  gameId: string;
+  commentId: string;
+};
+
 export type SharePayload = {
   gameId: string;
 };
@@ -13,7 +18,6 @@ export type TopGameQuery = {
 
 export type TGameUpdate = {
   data: {
-    userId: string;
     gameId: string;
     title?: string;
     subTitle?: string;
@@ -22,6 +26,8 @@ export type TGameUpdate = {
     platform?: string[];
     price?: number;
     socialLinks?: { name: string; link: string }[];
+    gameStatus?: 'active' | 'upcoming';
+    upcomingDate?: Date;
   };
   image?: {
     images?: string[];

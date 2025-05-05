@@ -6,6 +6,7 @@ import QueryBuilder from '../../app/builder/QueryBuilder';
 import User from '../user/user.model';
 import {
   CommentPayload,
+  CommentUpvotePayload,
   SharePayload,
   TGameUpdate,
   TopGameQuery,
@@ -17,6 +18,7 @@ import { GameInterface, IPendingGameUpdate, Upvote } from './game.interface';
 import mongoose from 'mongoose';
 import MediaUrl from '../../utility/game.media';
 import { idConverter } from '../../utility/idCoverter';
+import Game from './game.model';
 
 const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   console.log('createNewGameIntoDb - Request Details:', {
@@ -25,7 +27,7 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
     userId,
     headers: req.headers,
   });
-
+  const userIdObject = await idConverter(userId);
   const { data, image } = req.body;
   console.log(image);
 
@@ -71,34 +73,36 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
     ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId)
     : image?.thumbnail || '';
 
-  const user = await User.findById(userId).where({ isDeleted: { $ne: true } });
+  const user = await User.findById(userIdObject).where({
+    isDeleted: { $ne: true },
+  });
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
   }
 
   const gameData: GameInterface = {
     // id: new mongoose.Types.ObjectId(),
-    userId: typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId,
+    userId: userIdObject,
     userName: data.userName || 'Unknown',
     title: data.title,
-    subTitle: data.subTitle || '',
+    // subTitle: data.subTitle || '',
     description: data.description || '',
     image: mediaFiles.length > 0 ? mediaFiles : image?.images || [],
     thumbnail: thumbnail,
     categories: data.categories,
-    platform: data.platform || [],
+    // platform: data.platform || [],
     price: data.price ? parseFloat(data.price) : 0,
     socialLinks: data.socialLinks || [],
     gameStatus: data.gameStatus,
     upcomingDate: data.upcomingDate,
-    comments: [],
-    totalComments: 0,
-    shares: [],
-    totalShare: 0,
-    upvote: data.upvote,
-    totalUpvote: data.totalUpvote,
-    isApproved: false,
-    isDelete: false,
+    // comments: [],
+    // totalComments: 0,
+    // shares: [],
+    // totalShare: 0,
+    // upvote: data.upvote,
+    // totalUpvote: data.totalUpvote,
+    // isApproved: false,
+    // isDelete: false,
   };
 
   // const gameData: GameInterface = {
@@ -122,7 +126,7 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   //   isDelete: false,
   // };
 
-  const result = await games.create(gameData);
+  const result = await Game.create(gameData);
   return result;
 };
 
@@ -160,10 +164,12 @@ const getAllGameIntoDb = async (
   }
 };
 
-const getUpcomingGame = async (query: Record<string, unknown>,
-  role: UserRole) => {
+const getUpcomingGame = async (
+  query: Record<string, unknown>,
+  role: UserRole,
+) => {
   try {
-    console.log("query: ", query)
+    console.log('query: ', query);
     if (!Object.values(USER_ROLE).includes(role)) {
       throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
     }
@@ -173,8 +179,7 @@ const getUpcomingGame = async (query: Record<string, unknown>,
       filter.isApproved = true;
     }
 
-    const baseQuery = games.find(filter)
-      .populate('userId')
+    const baseQuery = games.find(filter).populate('userId');
 
     // if (role !== USER_ROLE.ADMIN) {
     //   baseQuery.where({ isApproved: true });
@@ -198,26 +203,26 @@ const getUpcomingGame = async (query: Record<string, unknown>,
       '',
     );
   }
+};
 
-}
-
-const getSimilarGame = async (query: Record<string, unknown>,
-  role: UserRole) => {
+const getSimilarGame = async (
+  query: Record<string, unknown>,
+  role: UserRole,
+) => {
   try {
-    console.log("query: ", query)
-    const { gameId } = query
-    const gameIdObject = await idConverter(gameId as string)
+    console.log('query: ', query);
+    const { gameId } = query;
+    const gameIdObject = await idConverter(gameId as string);
 
-    console.log("gameId: ", gameIdObject)
+    console.log('gameId: ', gameIdObject);
 
     if (!gameId) {
-      throw new AppError(httpStatus.NOT_FOUND, 'GameId is required', '')
+      throw new AppError(httpStatus.NOT_FOUND, 'GameId is required', '');
     }
 
     if (!Object.values(USER_ROLE).includes(role)) {
       throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
     }
-
 
     const currentGame = await games.findById(gameIdObject!);
     if (!currentGame) {
@@ -235,14 +240,13 @@ const getSimilarGame = async (query: Record<string, unknown>,
       $or: [
         { type: currentGame.platform },
         { category: currentGame.categories },
-      ]
+      ],
     };
 
     if (role !== USER_ROLE.ADMIN) {
       filter.isApproved = true;
     }
-    const baseQuery = games.find(filter)
-      .populate('gameId')
+    const baseQuery = games.find(filter).populate('gameId');
 
     // if (role !== USER_ROLE.ADMIN) {
     //   baseQuery.where({ isApproved: true });
@@ -266,13 +270,19 @@ const getSimilarGame = async (query: Record<string, unknown>,
       '',
     );
   }
-}
+};
 
 const userComment = async (payload: CommentPayload, userId: string) => {
   try {
     const { gameId, comment } = payload;
     // console.log(userId);
-
+    if (!gameId || !comment) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Game ID and comment are required',
+        '',
+      );
+    }
     const user = await User.findById(userId).where({
       isDeleted: { $ne: true },
     });
@@ -280,9 +290,7 @@ const userComment = async (payload: CommentPayload, userId: string) => {
       throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
     }
 
-    const game = await games
-      .findById(gameId)
-      .where({ isDelete: { $ne: true } });
+    const game = await Game.findById(gameId).where({ isDelete: { $ne: true } });
     if (!game) {
       throw new AppError(
         httpStatus.NOT_FOUND,
@@ -290,22 +298,24 @@ const userComment = async (payload: CommentPayload, userId: string) => {
         '',
       );
     }
+    const commentData = {
+      userId: new mongoose.Types.ObjectId(userId),
+      comment: payload.comment,
+      commentTime: new Date(),
+      upvote: [],
+      totalUpvote: 0,
+      report: [],
+      createdAt: new Date(),
+    };
 
-    const updatedGame = await games
-      .findByIdAndUpdate(
-        { id: gameId },
-        {
-          $push: {
-            comments: { userId, comment },
-          },
-          $inc: {
-            totalComments: 1,
-          },
-        },
-        { new: true, runValidators: true },
-      )
-      .where({ isDelete: { $ne: true } })
-      .populate('userId');
+    const updatedGame = await Game.findByIdAndUpdate(
+      payload.gameId,
+      {
+        $push: { comments: commentData },
+        $inc: { totalComments: 1 },
+      },
+      { new: true, runValidators: true },
+    ).populate('userId');
 
     if (!updatedGame) {
       throw new AppError(httpStatus.NOT_FOUND, 'Failed to add comment', '');
@@ -316,6 +326,85 @@ const userComment = async (payload: CommentPayload, userId: string) => {
     throw new AppError(
       error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to add comment',
+      '',
+    );
+  }
+};
+
+const userCommentUpvote = async (payload: CommentUpvotePayload, userId: string) => {
+  try {
+    if (!payload.gameId || !payload.commentId) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Game ID and comment ID are required',
+        '',
+      );
+    }
+
+    const user = await User.findById(userId).where({
+      isDeleted: { $ne: true },
+    });
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+    }
+
+    const game = await Game.findById(payload.gameId).where({
+      isDelete: { $ne: true },
+    });
+    if (!game) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Game not found or is deleted',
+        '',
+      );
+    }
+
+    const comment = game.comments?.find((c) =>
+      c._id?.equals(payload.commentId),
+    );
+    if (!comment) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Comment not found', '');
+    }
+
+    const alreadyUpvoted = comment.upvote.some((vote) =>
+      vote.userId.equals(userId),
+    );
+    if (alreadyUpvoted) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'User has already upvoted this comment',
+        '',
+      );
+    }
+
+    const updatedGame = await Game.findOneAndUpdate(
+      {
+        _id: payload.gameId,
+        'comments._id': payload.commentId,
+        isDelete: { $ne: true },
+      },
+      {
+        $push: {
+          'comments.$.upvote': {
+            userId: new mongoose.Types.ObjectId(userId),
+            createdAt: new Date(),
+          },
+        },
+        $inc: { 'comments.$.totalUpvote': 1 },
+      },
+      { new: true, runValidators: true },
+    ).populate('userId');
+
+    if (!updatedGame) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Failed to upvote comment', '');
+    }
+
+    return updatedGame;
+  } catch (error: any) {
+    console.error('Error in userCommentUpvote:', error);
+    throw new AppError(
+      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to upvote comment',
       '',
     );
   }
@@ -332,9 +421,7 @@ const userShare = async (payload: SharePayload, userId: string) => {
       throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
     }
 
-    const game = await games
-      .findById(gameId)
-      .where({ isDelete: { $ne: true } });
+    const game = await Game.findById(gameId).where({ isDelete: { $ne: true } });
     if (!game) {
       throw new AppError(
         httpStatus.NOT_FOUND,
@@ -343,7 +430,7 @@ const userShare = async (payload: SharePayload, userId: string) => {
       );
     }
 
-    const alreadyShared = game.shares.some((share) =>
+    const alreadyShared = game?.shares?.some((share) =>
       share.userId.equals(userId),
     );
     if (alreadyShared) {
@@ -384,7 +471,6 @@ const userShare = async (payload: SharePayload, userId: string) => {
   }
 };
 
-
 export const getTopGameOfDay = async (query: TopGameQuery) => {
   try {
     const { limit = 10 } = query;
@@ -408,11 +494,11 @@ export const getTopGameOfDay = async (query: TopGameQuery) => {
                 cond: {
                   $and: [
                     { $gte: ['$$comment.createdAt', start] },
-                    { $lte: ['$$comment.createdAt', end] }
-                  ]
-                }
-              }
-            }
+                    { $lte: ['$$comment.createdAt', end] },
+                  ],
+                },
+              },
+            },
           },
           todayShares: {
             $size: {
@@ -422,11 +508,11 @@ export const getTopGameOfDay = async (query: TopGameQuery) => {
                 cond: {
                   $and: [
                     { $gte: ['$$share.createdAt', start] },
-                    { $lte: ['$$share.createdAt', end] }
-                  ]
-                }
-              }
-            }
+                    { $lte: ['$$share.createdAt', end] },
+                  ],
+                },
+              },
+            },
           },
           todayUpvotes: {
             $size: {
@@ -436,20 +522,20 @@ export const getTopGameOfDay = async (query: TopGameQuery) => {
                 cond: {
                   $and: [
                     { $gte: ['$$vote.createdAt', start] },
-                    { $lte: ['$$vote.createdAt', end] }
-                  ]
-                }
-              }
-            }
-          }
-        }
+                    { $lte: ['$$vote.createdAt', end] },
+                  ],
+                },
+              },
+            },
+          },
+        },
       },
       {
         $addFields: {
           popularityScore: {
-            $add: ['$todayComments', '$todayShares', '$todayUpvotes']
-          }
-        }
+            $add: ['$todayComments', '$todayShares', '$todayUpvotes'],
+          },
+        },
       },
       { $sort: { popularityScore: -1 } },
       { $limit: limit },
@@ -458,10 +544,10 @@ export const getTopGameOfDay = async (query: TopGameQuery) => {
           from: 'users',
           localField: 'userId',
           foreignField: '_id',
-          as: 'userId'
-        }
+          as: 'userId',
+        },
       },
-      { $unwind: '$userId' }
+      { $unwind: '$userId' },
     ]);
 
     return topGames;
@@ -469,11 +555,10 @@ export const getTopGameOfDay = async (query: TopGameQuery) => {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to retrieve top games of the day',
-      ''
+      '',
     );
   }
 };
-
 
 export const getTopGameOfWeek = async (query: TopGameQuery) => {
   try {
@@ -493,53 +578,53 @@ export const getTopGameOfWeek = async (query: TopGameQuery) => {
           weekComments: {
             $size: {
               $filter: {
-                input: { $ifNull: ['$comments', []] },  // Handle null values
+                input: { $ifNull: ['$comments', []] }, // Handle null values
                 as: 'comment',
                 cond: {
                   $and: [
                     { $gte: ['$$comment.createdAt', start] },
-                    { $lte: ['$$comment.createdAt', end] }
-                  ]
-                }
-              }
-            }
+                    { $lte: ['$$comment.createdAt', end] },
+                  ],
+                },
+              },
+            },
           },
           weekShares: {
             $size: {
               $filter: {
-                input: { $ifNull: ['$shares', []] },  // Handle null values
+                input: { $ifNull: ['$shares', []] }, // Handle null values
                 as: 'share',
                 cond: {
                   $and: [
                     { $gte: ['$$share.createdAt', start] },
-                    { $lte: ['$$share.createdAt', end] }
-                  ]
-                }
-              }
-            }
+                    { $lte: ['$$share.createdAt', end] },
+                  ],
+                },
+              },
+            },
           },
           weekUpvotes: {
             $size: {
               $filter: {
-                input: { $ifNull: ['$upvote', []] },  // Handle null values
+                input: { $ifNull: ['$upvote', []] }, // Handle null values
                 as: 'vote',
                 cond: {
                   $and: [
                     { $gte: ['$$vote.createdAt', start] },
-                    { $lte: ['$$vote.createdAt', end] }
-                  ]
-                }
-              }
-            }
-          }
-        }
+                    { $lte: ['$$vote.createdAt', end] },
+                  ],
+                },
+              },
+            },
+          },
+        },
       },
       {
         $addFields: {
           popularityScore: {
-            $add: ['$weekComments', '$weekShares', '$weekUpvotes']
-          }
-        }
+            $add: ['$weekComments', '$weekShares', '$weekUpvotes'],
+          },
+        },
       },
       { $sort: { popularityScore: -1 } },
       { $limit: limit },
@@ -548,10 +633,10 @@ export const getTopGameOfWeek = async (query: TopGameQuery) => {
           from: 'users',
           localField: 'userId',
           foreignField: '_id',
-          as: 'userId'
-        }
+          as: 'userId',
+        },
       },
-      { $unwind: '$userId' }
+      { $unwind: '$userId' },
     ]);
 
     return topGames;
@@ -559,22 +644,20 @@ export const getTopGameOfWeek = async (query: TopGameQuery) => {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to retrieve top games of the week',
-      ''
+      '',
     );
   }
 };
 
-
-
 const updateGameIntoDb = async (
-  id: string,
+  userId: string,
   payload: TGameUpdate,
   files?: { [fieldname: string]: Express.Multer.File[] },
 ) => {
   const { data, image } = payload;
-  const dataGameId = new mongoose.Types.ObjectId(data.gameId)
-  const dataUserId = new mongoose.Types.ObjectId(data.userId)
-  console.log(payload);
+  const dataGameId = await idConverter(data.gameId);
+  const dataUserId = await idConverter(userId);
+  console.log('update game payload: ', payload);
 
   if (!dataUserId) {
     throw new AppError(
@@ -588,9 +671,9 @@ const updateGameIntoDb = async (
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid game ID', '');
   }
 
-  const game = await games
-    .findById(dataGameId)
-    .where({ isDelete: { $ne: true } });
+  const game = await Game.findById(dataGameId).where({
+    isDelete: { $ne: true },
+  });
   if (!game) {
     throw new AppError(
       httpStatus.NOT_FOUND,
@@ -598,8 +681,11 @@ const updateGameIntoDb = async (
       '',
     );
   }
+  console.log('userId type: ', dataUserId);
 
-  if (game.userId !== dataUserId) {
+  console.log('userId type: ', game.userId);
+
+  if (game.userId.toString() !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'You can only update your own games',
@@ -624,10 +710,10 @@ const updateGameIntoDb = async (
   const thumbnailFile = files?.['thumbnail'] ? files['thumbnail'][0] : null;
 
   const mediaFiles = imageFiles.map((file) =>
-    MediaUrl.gameMediaUrl(file.path, data.userId),
+    MediaUrl.gameMediaUrl(file.path, userId),
   );
   const thumbnail = thumbnailFile
-    ? MediaUrl.gameMediaUrl(thumbnailFile.path, data.userId)
+    ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId)
     : image?.thumbnail || '';
 
   const pendingUpdateData: Partial<IPendingGameUpdate> = {
@@ -642,6 +728,8 @@ const updateGameIntoDb = async (
     platform: data.platform,
     price: data.price,
     socialLinks: data.socialLinks,
+    gameStatus: data.gameStatus,
+    upcomingDate: data.upcomingDate ? new Date(data.upcomingDate) : undefined,
     status: 'pending',
     submittedAt: new Date(),
   };
@@ -656,6 +744,7 @@ const GameServices = {
   getUpcomingGame,
   getSimilarGame,
   userComment,
+  userCommentUpvote,
   userShare,
   getTopGameOfDay,
   getTopGameOfWeek,

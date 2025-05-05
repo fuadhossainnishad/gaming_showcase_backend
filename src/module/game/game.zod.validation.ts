@@ -27,9 +27,7 @@ const GameDataSchema = z.object({
   categories: z
     .array(z.string().min(1, 'Category cannot be empty'))
     .min(1, 'At least one category is required'),
-  platform: z
-    .array(z.string().min(1, 'Platform cannot be empty'))
-    .optional(),
+  platform: z.array(z.string().min(1, 'Platform cannot be empty')).optional(),
   price: z.number().min(0, 'Price must be non-negative'),
   socialLinks: z.array(SocialLinksSchema).optional(),
 });
@@ -43,7 +41,7 @@ const GameSchema = z.object({
   body: z.object({
     data: GameDataSchema,
     image: ImageSchema.optional(),
-  })
+  }),
 });
 
 const CommentSchema = z.object({
@@ -54,7 +52,16 @@ const CommentSchema = z.object({
         .string({ required_error: 'Comment is required' })
         .min(1, 'Comment cannot be empty')
         .max(500, 'Comment cannot exceed 500 characters'),
-    })
+    }),
+  }),
+});
+
+const UpvoteCommentSchema = z.object({
+  body: z.object({
+    data: z.object({
+      gameId: z.string({ required_error: 'Game ID is required' }),
+      commentId: z.string({ required_error: 'Comment ID is required' }),
+    }),
   }),
 });
 
@@ -62,7 +69,7 @@ const ShareSchema = z.object({
   body: z.object({
     data: z.object({
       gameId: z.string({ required_error: 'Game ID is required' }),
-    })
+    }),
   }),
 });
 
@@ -77,27 +84,29 @@ const TopGameQuerySchema = z.object({
 });
 
 const GameUpdateSchemaValidation = z.object({
-  body: z.object({
-    data: GameDataSchema.partial().extend({
-      userId: z.string().min(1, 'User ID is required'),
-      gameId: z.string().min(1, 'Game ID is required')
-    }),
-    image: ImageSchema.optional(),
-  }).refine(
-    (body) => {
-      const { userId, gameId, ...otherFields } = body.data;
-      const hasDataToUpdate = Object.keys(otherFields).length > 0;
-      const hasImageUpdate =
-        body.image?.images?.length || !!body.image?.thumbnail;
+  body: z
+    .object({
+      data: GameDataSchema.partial().extend({
+        userId: z.string().min(1, 'User ID is required'),
+        gameId: z.string().min(1, 'Game ID is required'),
+      }),
+      image: ImageSchema.optional(),
+    })
+    .refine(
+      (body) => {
+        const { userId, gameId, ...otherFields } = body.data;
+        const hasDataToUpdate = Object.keys(otherFields).length > 0;
+        const hasImageUpdate =
+          body.image?.images?.length || !!body.image?.thumbnail;
 
-      return hasDataToUpdate || hasImageUpdate;
-    },
-    {
-      message: 'At least one field must be provided for update',
-      path: ['data'],
-    }
-  )
-})
+        return hasDataToUpdate || hasImageUpdate;
+      },
+      {
+        message: 'At least one field must be provided for update',
+        path: ['data'],
+      },
+    ),
+});
 
 // const GameUpdateSchema = z.object({
 //   body: z
@@ -156,7 +165,9 @@ const GameUpdateSchemaValidation = z.object({
 const ApproveGameUpdateValidation = z.object({
   body: z
     .object({
-      updateId: z.string({ required_error: 'Update ID is required' }),
+      data: z.object({
+        updateId: z.string({ required_error: 'Update ID is required' }),
+      }),
     })
     .strict('Only updateId is allowed'),
 });
@@ -164,7 +175,9 @@ const ApproveGameUpdateValidation = z.object({
 const RejectGameUpdateValidation = z.object({
   body: z
     .object({
-      updateId: z.string({ required_error: 'Update ID is required' }),
+      data: z.object({
+        updateId: z.string({ required_error: 'Update ID is required' }),
+      }),
     })
     .strict('Only updateId is allowed'),
 });
@@ -172,6 +185,7 @@ const RejectGameUpdateValidation = z.object({
 const GameValidationSchema = {
   GameSchema,
   CommentSchema,
+  UpvoteCommentSchema,
   ShareSchema,
   TopGameQuerySchema,
   GameUpdateSchemaValidation,

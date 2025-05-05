@@ -40,9 +40,8 @@ const loginAdmin: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const approveGameByAdmin: RequestHandler = catchAsync(async (req, res) => {
-  console.log("body: ", req.body.data)
+  console.log('body: ', req.body.data);
   const result = await AdminServices.approveGame(req.body.data);
-
 
   sendResponse(res, {
     success: true,
@@ -64,7 +63,10 @@ const getPendingGameUpdates: RequestHandler = catchAsync(async (req, res) => {
 
 const approveGameUpdateByAdmin: RequestHandler = catchAsync(
   async (req, res) => {
-    const result = await AdminServices.approveGameUpdate(req.body.data);
+    const result = await AdminServices.approveGameUpdate(
+      req.body.data,
+      req.user?.id!,
+    );
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
@@ -98,13 +100,13 @@ const getPendingProfileUpdates: RequestHandler = catchAsync(
 
 const approveProfileUpdateByAdmin: RequestHandler = catchAsync(
   async (req, res) => {
-
-    console.log('approveProfileUpdateByAdmin:', req);
+    console.log('approveProfileUpdateByAdmin:', req.user?.id!);
 
     if (!req.user) {
       throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
-    } const result = await AdminServices.approveProfileUpdate(
-      req.user.id,
+    }
+    const result = await AdminServices.approveProfileUpdate(
+      req.user?.id!,
       req.body.data,
     );
 
@@ -120,7 +122,7 @@ const approveProfileUpdateByAdmin: RequestHandler = catchAsync(
 const rejectProfileUpdateByAdmin: RequestHandler = catchAsync(
   async (req, res) => {
     const result = await AdminServices.rejectProfileUpdate(
-      req.user!.id,
+      req.user?.id!,
       req.body.data.updateId,
     );
     sendResponse(res, {
@@ -132,19 +134,25 @@ const rejectProfileUpdateByAdmin: RequestHandler = catchAsync(
   },
 );
 
-const deleteUserByAdmin: RequestHandler = catchAsync(
-  async (req, res) => {
-    const result = await AdminServices.deleteUser(
-      req.body.data.id,
-    );
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: 'User deleted successfully',
-      data: result,
-    });
-  },
-);
+const deleteUserByAdmin: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AdminServices.deleteUser(req.body.data.id);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User deleted successfully',
+    data: result,
+  });
+});
+
+const deleteGameByAdmin: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AdminServices.deleteUser(req.body.data.id);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User deleted successfully',
+    data: result,
+  });
+});
 
 const getDashboardStats: RequestHandler = catchAsync(async (req, res) => {
   const result = await AdminServices.getDashboardStats();
@@ -167,6 +175,7 @@ const AdminController = {
   approveProfileUpdateByAdmin,
   rejectProfileUpdateByAdmin,
   deleteUserByAdmin,
+  deleteGameByAdmin,
   getDashboardStats,
 };
 

@@ -18,9 +18,14 @@ const createNewGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
     throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
   }
 
-  const userId = req.body.data && (typeof req.body.data === 'string'
-    ? JSON.parse(req.body.data).userId
-    : req.body.data?.userId);
+  // const userId =
+  //   req.body.data &&
+  //   (typeof req.body.data === 'string'
+  //     ? JSON.parse(req.body.data).userId
+  //     : req.body.data?.userId);
+
+  const userId = req.user?.id!;
+  console.log('userId: ', userId);
 
   if (!userId) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User ID is required', '');
@@ -94,10 +99,7 @@ const addComment: RequestHandler = catchAsync(async (req, res) => {
   // console.log(req.body.body);
   // console.log(req.user);
 
-  const result = await GameServices.userComment(
-    req.body,
-    req.user?.id as string,
-  );
+  const result = await GameServices.userComment(req.body.data, req.user?.id!);
 
   sendResponse(res, {
     success: true,
@@ -107,8 +109,22 @@ const addComment: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const addCommentUpvote: RequestHandler = catchAsync(async (req, res) => {
+  console.log('add comment upvote: ', req.body);
+  // console.log(req.user);
+
+  const result = await GameServices.userCommentUpvote(req.body.data, req.user?.id!);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully upvoted this comment',
+    data: result,
+  });
+});
+
 const addShare: RequestHandler = catchAsync(async (req, res) => {
-  const result = await GameServices.userShare(req.body, req.user?.id as string);
+  const result = await GameServices.userShare(req.body.data, req.user?.id as string);
 
   sendResponse(res, {
     success: true,
@@ -158,7 +174,7 @@ const updateGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   }
 
   const result = await GameServices.updateGameIntoDb(
-    req.user.id,
+    req.user?.id!,
     req.body,
     req.files as { [fieldname: string]: Express.Multer.File[] },
   );
@@ -176,6 +192,7 @@ const GameController = {
   getUpcomingGame,
   getSimilarGame,
   addComment,
+  addCommentUpvote,
   addShare,
   getTopGameOfDay,
   getTopGameOfWeek,

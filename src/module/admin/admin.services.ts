@@ -1,6 +1,5 @@
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
-import games from '../game/game.model';
 import {
   approveGameType,
   TApproveGameUpdate,
@@ -17,6 +16,8 @@ import { jwtHelpers } from '../../app/jwtHalpers/jwtHalpers';
 import config from '../../app/config';
 import Admin from './admin.model';
 import { IAdmin } from './admin.interface';
+import Game from '../game/game.model';
+import { idConverter } from '../../utility/idCoverter';
 
 const createAdminIntoDb = async (payload: IAdmin) => {
   try {
@@ -89,8 +90,12 @@ const loginAdminIntoDb = async (payload: TAuth) => {
 
 const approveGame = async (payload: approveGameType) => {
   const { gameId } = payload;
+  const gameIdObject = await idConverter(gameId);
+  console.log('gameId: ', gameIdObject);
 
-  const game = await games.findById(gameId).where({ isDelete: { $ne: true } });
+  const game = await Game.findById(gameIdObject).where({
+    isDelete: { $ne: true },
+  });
 
   if (!game) {
     throw new AppError(
@@ -100,13 +105,11 @@ const approveGame = async (payload: approveGameType) => {
     );
   }
 
-  const updatedGame = await games
-    .findByIdAndUpdate(
-      gameId,
-      { $set: { isApproved: true } },
-      { new: true, runValidators: true },
-    )
-    .where({ isDelete: { $ne: true } });
+  const updatedGame = await Game.findByIdAndUpdate(
+    gameId,
+    { $set: { isApproved: true } },
+    { new: true, runValidators: true },
+  ).where({ isDelete: { $ne: true } });
 
   if (!updatedGame) {
     throw new AppError(httpStatus.NOT_FOUND, 'Failed to update game', '');
@@ -123,71 +126,100 @@ const getPendingGameUpdates = async () => {
   return updates;
 };
 
-const approveGameUpdate = async (payload: TApproveGameUpdate) => {
-  console.log(payload.updateId);
-  const pendingUpdate = await PendingGameUpdate.findById(payload.updateId);
-  if (!pendingUpdate) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      'Pending game update not found',
-      '',
-    );
-  }
+const approveGameUpdate = async (
+  payload: TApproveGameUpdate,
+  adminId: string,
+) => {
+  try {
+    if (!payload.updateId) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Update ID is required', '');
+    }
 
-  if (pendingUpdate.status !== 'pending') {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Game update is not in pending status',
-      '',
-    );
-  }
+    const updateIdObject = await idConverter(payload.updateId!);
 
-  const game = await games
-    .findById(pendingUpdate.gameId)
-    .where({ isDelete: { $ne: true } });
+    if (!updateIdObject) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Invalid update ID format',
+        '',
+      );
+    }
 
-  if (!game) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
-  }
+    const admin = await User.findById(updateIdObject).where({
+      isDeleted: { $ne: true },
+      role: USER_ROLE.ADMIN,
+    });
+    if (!admin) {
+      throw new AppError(httpStatus.FORBIDDEN, 'Admin user not found', '');
+    }
 
-  if (!game.isApproved) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Game must be approved before applying updates',
-      '',
-    );
-  }
+    const pendingUpdate = await PendingGameUpdate.findById(updateIdObject);
+    if (!pendingUpdate) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Pending game update not found',
+        '',
+      );
+    }
 
-  const updateFields: Partial<GameInterface> = {};
-  if (pendingUpdate.title !== undefined)
-    updateFields.title = pendingUpdate.title;
-  if (pendingUpdate.subTitle !== undefined)
-    updateFields.subTitle = pendingUpdate.subTitle;
-  if (pendingUpdate.description !== undefined)
-    updateFields.description = pendingUpdate.description;
-  if (pendingUpdate.image !== undefined)
-    updateFields.image = pendingUpdate.image;
-  if (pendingUpdate.thumbnail !== undefined)
-    updateFields.thumbnail = pendingUpdate.thumbnail;
-  if (pendingUpdate.categories !== undefined)
-    updateFields.categories = pendingUpdate.categories;
-  if (pendingUpdate.platform !== undefined)
-    updateFields.platform = pendingUpdate.platform;
-  if (pendingUpdate.price !== undefined)
-    updateFields.price = pendingUpdate.price;
-  if (pendingUpdate.socialLinks !== undefined)
-    updateFields.socialLinks = pendingUpdate.socialLinks;
+    if (pendingUpdate.status !== 'pending') {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Game update is not in pending status',
+        '',
+      );
+    }
 
-  if (Object.keys(updateFields).length === 0) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'No valid fields provided for update',
-      '',
-    );
-  }
+    // Find game
+    const game = await Game.findById(pendingUpdate.gameId).where({
+      isDelete: { $ne: true },
+    });
+    if (!game) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
+    }
 
-  const updatedGame = await games
-    .findByIdAndUpdate(
+    if (!game.isApproved) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Game must be approved before applying updates',
+        '',
+      );
+    }
+
+    const updateFields: Partial<GameInterface> = {};
+    if (pendingUpdate.title !== undefined)
+      updateFields.title = pendingUpdate.title;
+    if (pendingUpdate.subTitle !== undefined)
+      updateFields.subTitle = pendingUpdate.subTitle;
+    if (pendingUpdate.description !== undefined)
+      updateFields.description = pendingUpdate.description;
+    if (pendingUpdate.image !== undefined)
+      updateFields.image = pendingUpdate.image;
+    if (pendingUpdate.thumbnail !== undefined)
+      updateFields.thumbnail = pendingUpdate.thumbnail;
+    if (pendingUpdate.categories !== undefined)
+      updateFields.categories = pendingUpdate.categories;
+    if (pendingUpdate.platform !== undefined)
+      updateFields.platform = pendingUpdate.platform;
+    if (pendingUpdate.price !== undefined)
+      updateFields.price = pendingUpdate.price;
+    if (pendingUpdate.socialLinks !== undefined)
+      updateFields.socialLinks = pendingUpdate.socialLinks;
+    if (pendingUpdate.gameStatus !== undefined)
+      updateFields.gameStatus = pendingUpdate.gameStatus;
+    if (pendingUpdate.upcomingDate !== undefined)
+      updateFields.upcomingDate = pendingUpdate.upcomingDate;
+
+    if (Object.keys(updateFields).length === 0) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'No valid fields provided for update',
+        '',
+      );
+    }
+
+    // Update game
+    const updatedGame = await Game.findByIdAndUpdate(
       pendingUpdate.gameId,
       { $set: updateFields },
       {
@@ -195,44 +227,57 @@ const approveGameUpdate = async (payload: TApproveGameUpdate) => {
         runValidators: true,
       },
     )
-    .where({ isDelete: { $ne: true } });
+      .where({ isDelete: { $ne: true } })
+      .populate('userId');
 
-  if (!updatedGame) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Failed to apply game update', '');
+    if (!updatedGame) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Failed to apply game update',
+        '',
+      );
+    }
+
+    await PendingGameUpdate.findByIdAndUpdate(updateIdObject, {
+      status: 'approved',
+      reviewedBy: await idConverter(adminId),
+      reviewedAt: new Date(),
+    });
+
+    return updatedGame;
+  } catch (error: any) {
+    console.error('Error in approveGameUpdate:', error);
+    throw new AppError(
+      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to approve game update',
+      '',
+    );
   }
-
-  await PendingGameUpdate.findByIdAndUpdate(payload.updateId, {
-    status: 'approved',
-    // reviewedBy: payload.reviewedBy,
-    reviewedAt: new Date(),
-  });
-  return updatedGame;
 };
 
 const rejectGameUpdate = async (updateId: string) => {
-  const pendingUpdate = await PendingGameUpdate.findById(updateId);
+  const updateIdObject = await idConverter(updateId);
+
+  if (!updateIdObject) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Invalid pending updateId ', '');
+  }
+
+  const pendingUpdate = await PendingGameUpdate.findById(updateIdObject);
   if (!pendingUpdate) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      'Pending game update not found',
-      '',
-    );
+    throw new AppError(httpStatus.NOT_FOUND, 'Pending update not found', '');
   }
 
   if (pendingUpdate.status !== 'pending') {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      'Game update is not in pending status',
+      'Update is not in pending status',
       '',
     );
   }
 
-  await PendingGameUpdate.findByIdAndUpdate(updateId, {
-    status: 'rejected',
-    reviewedAt: new Date(),
-  });
+  await PendingGameUpdate.deleteOne(updateIdObject);
 
-  return true;
+  return { message: 'Game update rejected successfully' };
 };
 
 const getPendingProfileUpdates = async () => {
@@ -247,62 +292,114 @@ const approveProfileUpdate = async (
   adminId: string,
   payload: TApproveProfileUpdate,
 ) => {
-  const pendingUpdate = await PendingUserUpdate.findById(payload.updateId);
-  if (!pendingUpdate) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Pending update not found', '');
-  }
+  try {
+    if (!payload.updateId) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Update ID is required', '');
+    }
+    const updateIdObject = await idConverter(payload.updateId!);
+    if (!updateIdObject) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Invalid update ID format',
+        '',
+      );
+    }
 
-  if (pendingUpdate.status !== 'pending') {
+    const admin = await Admin.findById(await idConverter(adminId!)).where({
+      isDeleted: { $ne: true },
+      role: USER_ROLE.ADMIN,
+    });
+    if (!admin) {
+      throw new AppError(httpStatus.FORBIDDEN, 'Admin user not found', '');
+    }
+
+    const pendingUpdate = await PendingUserUpdate.findById(updateIdObject);
+    if (!pendingUpdate) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Pending profile update not found',
+        '',
+      );
+    }
+
+    if (pendingUpdate.status !== 'pending') {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Profile update is not in pending status',
+        '',
+      );
+    }
+
+    const user = await User.findById(pendingUpdate.userId).where({
+      isDeleted: { $ne: true },
+    });
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+    }
+
+    const updateFields: Partial<IUser> = {
+      approvedUpdate: true,
+    };
+    if (pendingUpdate.name !== undefined)
+      updateFields.name = pendingUpdate.name;
+    if (pendingUpdate.userName !== undefined)
+      updateFields.userName = pendingUpdate.userName;
+    if (pendingUpdate.bio !== undefined) updateFields.bio = pendingUpdate.bio;
+    if (pendingUpdate.links !== undefined)
+      updateFields.links = pendingUpdate.links;
+    if (pendingUpdate.photo !== undefined)
+      updateFields.photo = pendingUpdate.photo;
+
+    if (Object.keys(updateFields).length === 1) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'No valid fields provided for update',
+        '',
+      );
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      pendingUpdate.userId,
+      { $set: updateFields },
+      { new: true, runValidators: true },
+    )
+      .where({ isDeleted: { $ne: true } })
+      .select('name userName email role bio links photo approvedUpdate');
+
+    if (!updatedUser) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Failed to apply profile update',
+        '',
+      );
+    }
+
+    await PendingUserUpdate.findByIdAndUpdate(payload.updateId, {
+      status: 'approved',
+      reviewedBy: await idConverter(adminId),
+      reviewedAt: new Date(),
+    });
+
+    return updatedUser;
+  } catch (error: any) {
+    console.error('Error in approveProfileUpdate:', error);
     throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Update is not in pending status',
+      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to approve profile update',
       '',
     );
   }
-
-  const user = await User.findOne({
-    userId: pendingUpdate.id,
-    isDeleted: { $ne: true },
-  });
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
-  }
-
-  const updateFields: Partial<IUser> = {
-    approvedUpdate: true,
-  };
-  if (pendingUpdate.name) updateFields.name = pendingUpdate.name;
-  if (pendingUpdate.userName) updateFields.userName = pendingUpdate.userName;
-  if (pendingUpdate.bio !== undefined) updateFields.bio = pendingUpdate.bio;
-  if (pendingUpdate.links) updateFields.links = pendingUpdate.links;
-  if (pendingUpdate.photo !== undefined)
-    updateFields.photo = pendingUpdate.photo;
-
-  const updatedUser = await User.findOneAndUpdate(
-    { userId: pendingUpdate.id, isDeleted: { $ne: true } },
-    updateFields,
-    { new: true },
-  ).select('-password');
-
-  if (!updatedUser) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      'Failed to apply profile update',
-      '',
-    );
-  }
-
-  await PendingUserUpdate.findByIdAndUpdate(payload.updateId, {
-    status: 'approved',
-    reviewedBy: adminId,
-    reviewedAt: new Date(),
-  });
-
-  return updatedUser;
 };
 
 const rejectProfileUpdate = async (adminId: string, updateId: string) => {
-  const pendingUpdate = await PendingUserUpdate.findById(updateId);
+  const updateIdObject = await idConverter(updateId);
+  const adminIdObject = await idConverter(adminId);
+
+  if (!updateIdObject || !adminIdObject) {
+    throw new AppError(httpStatus.NOT_FOUND, 'AdminId & UserId required', '');
+  }
+
+  const pendingUpdate = await PendingUserUpdate.findById(updateIdObject);
   if (!pendingUpdate) {
     throw new AppError(httpStatus.NOT_FOUND, 'Pending update not found', '');
   }
@@ -315,19 +412,22 @@ const rejectProfileUpdate = async (adminId: string, updateId: string) => {
     );
   }
 
-  await PendingUserUpdate.findByIdAndUpdate(updateId, {
-    status: 'rejected',
-    reviewedBy: adminId,
-    reviewedAt: new Date(),
-  });
+  await PendingUserUpdate.deleteOne(updateIdObject);
 
   return { message: 'Profile update rejected successfully' };
 };
 
 const deleteUser = async (userId: string) => {
-  const findUser = await User.deleteOne({ id: userId });
+  const userIdObject = await idConverter(userId);
+
+  const findUser = await User.find({ _id: userIdObject });
+
   if (!findUser) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+  }
+  const deleteUser = await User.deleteOne({ _id: userIdObject });
+  if (!deleteUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not deleted', '');
   }
 
   // if (pendingUpdate.status !== 'pending') {
@@ -338,13 +438,35 @@ const deleteUser = async (userId: string) => {
   //   );
   // }
 
-  return { message: 'User deleted successfully' };
+  return deleteUser;
+};
+
+const deleteGame = async (gameId: string) => {
+  const gameIdObject = await idConverter(gameId);
+  const findGame = await Game.find({ _id: gameIdObject });
+  if (!findGame) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
+  }
+  const deleteUser = await Game.deleteOne({ _id: gameIdObject });
+  if (!deleteUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Game not deleted', '');
+  }
+
+  // if (pendingUpdate.status !== 'pending') {
+  //   throw new AppError(
+  //     httpStatus.BAD_REQUEST,
+  //     'Update is not in pending status',
+  //     '',
+  //   );
+  // }
+
+  return deleteGame;
 };
 
 const getDashboardStats = async () => {
   const totalUsers = await User.countDocuments({ isDeleted: false });
-  const totalGames = await games.countDocuments({ isDelete: false });
-  const totalUpcomingGames = await games.countDocuments({ isApproved: false });
+  const totalGames = await Game.countDocuments({ isDelete: false });
+  const totalUpcomingGames = await Game.countDocuments({ isApproved: false });
 
   const userWiseGames = await User.aggregate([
     { $match: { isDeleted: false } },
@@ -386,7 +508,7 @@ const getDashboardStats = async () => {
     'games.isApproved': 1,
   });
 
-  const userGames = await games.aggregate([
+  const userGames = await Game.aggregate([
     { $match: { isDelete: false } },
     {
       $group: {
@@ -417,9 +539,9 @@ const getDashboardStats = async () => {
     .select('-password')
     .lean();
 
-  const allGames = await games.find({ isDelete: false }).lean();
+  const allGames = await Game.find({ isDelete: false }).lean();
 
-  const approvedGames = await games.find({ isApproved: true }).lean();
+  const approvedGames = await Game.find({ isApproved: true }).lean();
 
   const gameUpdateRequest = await PendingGameUpdate.find({
     status: 'pending',
@@ -453,6 +575,7 @@ const AdminServices = {
   approveProfileUpdate,
   rejectProfileUpdate,
   deleteUser,
+  deleteGame,
   getDashboardStats,
 };
 
