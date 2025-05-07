@@ -43,6 +43,15 @@ const userSignInValidation = z.object({
   }),
 });
 
+const userDeleteValidation = z.object({
+  body: z.object({
+    data: z.object({
+      userId: z
+        .string({ required_error: 'Email is required' })
+    })
+  }),
+});
+
 const userProfileUpdateValidation = z.object({
   body: z
     .object({
@@ -96,6 +105,7 @@ const rejectUpdateValidation = z.object({
 export const userValidation = {
   userSignUpValidation,
   userSignInValidation,
+  userDeleteValidation,
   userProfileUpdateValidation,
   approveUpdateValidation,
   rejectUpdateValidation,

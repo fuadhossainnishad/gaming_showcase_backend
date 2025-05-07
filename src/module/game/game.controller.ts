@@ -24,7 +24,7 @@ const createNewGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   //     ? JSON.parse(req.body.data).userId
   //     : req.body.data?.userId);
 
-  const userId = req.user?.id!;
+  const userId = req.user?._id!;
   console.log('userId: ', userId);
 
   if (!userId) {
@@ -49,7 +49,7 @@ const getAllGame: RequestHandler = catchAsync(async (req, res) => {
       '',
     );
   }
-  const result = await GameServices.getAllGameIntoDb(req.query, req.user.role);
+  const result = await GameServices.getAllGameIntoDb(req.query, req.user?.role);
 
   sendResponse(res, {
     success: true,
@@ -99,7 +99,7 @@ const addComment: RequestHandler = catchAsync(async (req, res) => {
   // console.log(req.body.body);
   // console.log(req.user);
 
-  const result = await GameServices.userComment(req.body.data, req.user?.id!);
+  const result = await GameServices.userComment(req.body.data, req.user?._id!);
 
   sendResponse(res, {
     success: true,
@@ -113,7 +113,7 @@ const addCommentUpvote: RequestHandler = catchAsync(async (req, res) => {
   console.log('add comment upvote: ', req.body);
   // console.log(req.user);
 
-  const result = await GameServices.userCommentUpvote(req.body.data, req.user?.id!);
+  const result = await GameServices.userCommentUpvote(req.body.data, req.user?._id!);
 
   sendResponse(res, {
     success: true,
@@ -124,7 +124,7 @@ const addCommentUpvote: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const addShare: RequestHandler = catchAsync(async (req, res) => {
-  const result = await GameServices.userShare(req.body.data, req.user?.id as string);
+  const result = await GameServices.userShare(req.body.data, req.user?._id!);
 
   sendResponse(res, {
     success: true,
@@ -174,7 +174,7 @@ const updateGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   }
 
   const result = await GameServices.updateGameIntoDb(
-    req.user?.id!,
+    req.user?._id!,
     req.body,
     req.files as { [fieldname: string]: Express.Multer.File[] },
   );

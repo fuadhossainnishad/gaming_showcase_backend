@@ -1,7 +1,6 @@
 import { Model, Types } from 'mongoose';
 import { USER_ROLE } from './user.constant';
 import { GameInterface, SocialLinksInterface } from '../game/game.interface';
-import { string } from 'zod';
 
 export type TSignup = {
   name: string;

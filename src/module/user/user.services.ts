@@ -106,6 +106,35 @@ const userProfile = async (userId: string) => {
   return findUser;
 };
 
+const deleteUserIntoDb = async (userId: string, authUserId: string) => {
+  if (!authUserId) {
+    throw new AppError(httpStatus.NO_CONTENT, 'Invalid access', '');
+  }
+
+  if (!userId) {
+    throw new AppError(httpStatus.NO_CONTENT, 'Invalid userId', '');
+  }
+
+  if (userId != authUserId) {
+    throw new AppError(httpStatus.NO_CONTENT, 'Provided userId and user not same', '');
+  }
+  const userIdObject = await idConverter(userId)
+
+  const userExist = await User.findById(userIdObject)
+  if (!userExist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+  }
+
+  await User.deleteOne({ _id: userIdObject })
+
+  const userdeletd = await User.findById(userIdObject)
+
+  if (userdeletd) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not deleted', '');
+  }
+  return { message: 'User account deleted' };
+};
+
 const updateUserProfileIntoDb = async (
   userId: string,
   payload: IUserUpdate,
@@ -237,6 +266,7 @@ const UserServices = {
   createUserIntoDb,
   findAllUserIntoDb,
   userProfile,
+  deleteUserIntoDb,
   updateUserProfileIntoDb,
   submitProfileUpdate,
 };

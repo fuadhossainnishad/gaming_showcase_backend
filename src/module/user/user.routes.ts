@@ -34,10 +34,17 @@ router.patch(
   UserController.updateProfileUser,
 );
 
+router.delete('/delete-user',
+  auth(USER_ROLE.USER),
+  validationRequest(userValidation.userDeleteValidation),
+  UserController.deleteUserProfile,
+)
+
 // router.post(
 //   '/profile/update',
 //   verifyToken,
 //   validationRequest(userValidation.userProfileUpdateValidation),
 //   UserController.submitProfileUpdate,
 // );
+
 export const UserRouter = router;

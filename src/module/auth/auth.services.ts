@@ -11,7 +11,7 @@ import { emailRegex } from '../../constants/regex.constants';
 import { idConverter } from '../../utility/idCoverter';
 
 const loginUserIntoDb = async (payload: TAuth) => {
-  console.log(payload);
+  // console.log(payload);
 
   const isUserExist = await User.findOne(
     { email: payload.email },
@@ -21,6 +21,11 @@ const loginUserIntoDb = async (payload: TAuth) => {
   if (!isUserExist) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
   }
+
+  const userId = isUserExist._id
+  console.log(userId);
+
+  const loginUserData = await User.findById({ _id: userId })
 
   const isPasswordValid = await User.isPasswordMatched(
     payload.password,
@@ -48,11 +53,11 @@ const loginUserIntoDb = async (payload: TAuth) => {
     config.jwt_refresh_secret as string,
     config.refresh_expires_in as string,
   );
-console.log("iseUserExist: ",isUserExist)
+  console.log("isUserExist: ", isUserExist)
   return {
     accessToken,
     refreshToken,
-    user:isUserExist
+    user: loginUserData
   };
 };
 

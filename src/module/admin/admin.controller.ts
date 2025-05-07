@@ -65,7 +65,7 @@ const approveGameUpdateByAdmin: RequestHandler = catchAsync(
   async (req, res) => {
     const result = await AdminServices.approveGameUpdate(
       req.body.data,
-      req.user?.id!,
+      req.user?._id!,
     );
     sendResponse(res, {
       success: true,
@@ -122,7 +122,7 @@ const approveProfileUpdateByAdmin: RequestHandler = catchAsync(
 const rejectProfileUpdateByAdmin: RequestHandler = catchAsync(
   async (req, res) => {
     const result = await AdminServices.rejectProfileUpdate(
-      req.user?.id!,
+      req.user?._id!,
       req.body.data.updateId,
     );
     sendResponse(res, {

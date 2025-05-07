@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import httpStatus from 'http-status';
 import AppError from '../app/error/AppError';
 import catchAsync from '../utility/catchAsync';
@@ -7,8 +7,10 @@ import config from '../app/config';
 import users from '../module/user/user.model';
 import Admin from '../module/admin/admin.model';
 import { USER_ROLE, UserRole } from '../module/user/user.constant';
-import { UserPayload } from '../types/express';
+import { AdminPayload, AuthPayload, UserPayload } from '../types/express';
 import User from '../module/user/user.model';
+import { isExists } from 'date-fns';
+import { idConverter } from '../utility/idCoverter';
 
 const auth = (...requireRoles: UserRole[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -24,12 +26,12 @@ const auth = (...requireRoles: UserRole[]) => {
       ? authHeader.split(' ')[1]
       : authHeader;
 
-    let decoded: UserPayload;
+    let decoded: UserPayload | AdminPayload;
     try {
       decoded = jwt.verify(
         token,
         config.jwt_access_secret as string,
-      ) as UserPayload;
+      ) as UserPayload | AdminPayload;
     } catch {
       throw new AppError(
         httpStatus.UNAUTHORIZED,
@@ -38,23 +40,25 @@ const auth = (...requireRoles: UserRole[]) => {
       );
     }
 
-    const { role, id } = decoded;
+    const { role, id, email } = decoded;
+    console.log('Decoded JWT Payload:', { role, id, email });
 
     if (requireRoles.length && !requireRoles.includes(role)) {
       throw new AppError(httpStatus.FORBIDDEN, 'Access denied', '');
     }
     console.log('Decoded Token:', decoded);
 
-    let isUserExist = await User.findOne({ _id: id }, { _id: 1 });
+    let isUserExist = await User.findOne({ _id: await idConverter(id), email }).lean();
     if (!isUserExist && role === USER_ROLE.ADMIN) {
-      isUserExist = await Admin.findOne({ _id: id }, { _id: 1 });
+      isUserExist = await Admin.findOne({ _id: await idConverter(id), email });
     }
 
     if (!isUserExist) {
+      console.log('No user/admin found for id:', id, 'email:', email);
       throw new AppError(httpStatus.NOT_FOUND, 'User or Admin not found', '');
     }
-
-    req.user = decoded;
+    console.log("decode user:", isUserExist);
+    req.user = isUserExist;
     next();
   });
 };

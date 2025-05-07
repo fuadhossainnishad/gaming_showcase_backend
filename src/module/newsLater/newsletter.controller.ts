@@ -5,7 +5,7 @@ import httpStatus from 'http-status';
 import newsletterService from './newsletter.services';
 
 const addNewsletterMail: RequestHandler = catchAsync(async (req, res) => {
-  const result = await newsletterService.addNewsletterMail(req.user?.id!, req.body.data);
+  const result = await newsletterService.addNewsletterMail(req.user?._id!, req.body.data);
   console.log(req.body);
   sendResponse(res, {
     success: true,

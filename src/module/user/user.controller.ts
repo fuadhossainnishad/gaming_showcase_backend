@@ -28,8 +28,8 @@ const findAllUser: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const userProfile: RequestHandler = catchAsync(async (req, res) => {
-  console.log("userId", typeof req.user?.id);
-  const result = await UserServices.userProfile(req.user?.id!);
+  console.log("userId", typeof req.user?._id);
+  const result = await UserServices.userProfile(req.user?._id!);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -39,7 +39,7 @@ const userProfile: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
-  if (!req.user || !req.user.id) {
+  if (!req.user || !req.user?._id!) {
     throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
   }
   // console.log(req.body);
@@ -52,7 +52,7 @@ const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
   // };
 
   const result = await UserServices.updateUserProfileIntoDb(
-    req.user?.id!,
+    req.user?._id!,
     req.body.data,
     req.file,
   );
@@ -77,10 +77,21 @@ const submitProfileUpdate: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const deleteUserProfile: RequestHandler = catchAsync(async (req, res) => {
+  const result = await UserServices.deleteUserIntoDb(req.body.data.userId, req.user?._id!);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'successfully delete user',
+    data: result,
+  });
+});
+
 const UserController = {
   createUser,
   findAllUser,
   userProfile,
+  deleteUserProfile,
   updateProfileUser,
   submitProfileUpdate,
 };

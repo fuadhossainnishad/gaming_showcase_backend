@@ -60,7 +60,7 @@ const addComment: RequestHandler = catchAsync(async (req, res) => {
 
   const result = await GameServices.userComment(
     req.body,
-    req.user?.id as string,
+    req.user?._id!,
   );
 
   sendResponse(res, {
@@ -72,7 +72,7 @@ const addComment: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const addShare: RequestHandler = catchAsync(async (req, res) => {
-  const result = await GameServices.userShare(req.body, req.user?.id as string);
+  const result = await GameServices.userShare(req.body, req.user?._id!);
 
   sendResponse(res, {
     success: true,
@@ -122,7 +122,7 @@ const updateGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   }
 
   const result = await GameServices.updateGameIntoDb(
-    req.user.id,
+    req.user?._id!,
     req.body,
     req.files as { [fieldname: string]: Express.Multer.File[] },
   );

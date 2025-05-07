@@ -6,11 +6,16 @@ import httpStatus from 'http-status';
 import config from '../../app/config';
 import sendResponse from '../../utility/sendResponse';
 import { verify } from 'jsonwebtoken';
+import { log } from 'console';
 
 const loginUser: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AuthServices.loginUserIntoDb(req.body.data);
+  console.log("login req: ", req);
 
-  const { refreshToken, accessToken,user } = result;
+  const result = await AuthServices.loginUserIntoDb(req.body.data);
+  console.log(req.body?.data!);
+
+
+  const { refreshToken, accessToken, user } = result;
   res.cookie('refreshToken', refreshToken, {
     secure: config.NODE_ENV === 'production',
     httpOnly: true,
@@ -21,7 +26,7 @@ const loginUser: RequestHandler = catchAsync(async (req, res) => {
     message: 'Successfully Login',
     data: {
       accessToken,
-      user:user
+      user: user
     },
   });
 });
