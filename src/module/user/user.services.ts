@@ -38,6 +38,7 @@ const createUserIntoDb = async (payload: TSignup) => {
       createUserBuilder && {
         status: true,
         message: 'successfully create new user',
+        data: result
       }
     );
   } catch (error: any) {

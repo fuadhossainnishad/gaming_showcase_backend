@@ -48,10 +48,11 @@ const loginUserIntoDb = async (payload: TAuth) => {
     config.jwt_refresh_secret as string,
     config.refresh_expires_in as string,
   );
-
+console.log("iseUserExist: ",isUserExist)
   return {
     accessToken,
     refreshToken,
+    user:isUserExist
   };
 };
 

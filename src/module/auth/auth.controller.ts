@@ -10,7 +10,7 @@ import { verify } from 'jsonwebtoken';
 const loginUser: RequestHandler = catchAsync(async (req, res) => {
   const result = await AuthServices.loginUserIntoDb(req.body.data);
 
-  const { refreshToken, accessToken } = result;
+  const { refreshToken, accessToken,user } = result;
   res.cookie('refreshToken', refreshToken, {
     secure: config.NODE_ENV === 'production',
     httpOnly: true,
@@ -21,6 +21,7 @@ const loginUser: RequestHandler = catchAsync(async (req, res) => {
     message: 'Successfully Login',
     data: {
       accessToken,
+      user:user
     },
   });
 });
