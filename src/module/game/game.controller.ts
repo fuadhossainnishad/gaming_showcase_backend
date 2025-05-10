@@ -25,13 +25,13 @@ const createNewGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   //     : req.body.data?.userId);
 
   const userId = req.user?._id!;
-  console.log('userId: ', userId);
+  console.log('userId: ', userId.toString());
 
   if (!userId) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User ID is required', '');
   }
 
-  const result = await GameServices.createNewGameIntoDb(req, userId);
+  const result = await GameServices.createNewGameIntoDb(req, userId.toString()!);
 
   sendResponse(res, {
     success: true,
