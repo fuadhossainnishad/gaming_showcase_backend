@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
   '/add-mail',
-  auth(USER_ROLE.ADMIN),
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   validationRequest(newsletterValidationSchema),
   newsletterController.addNewsletterMail,
 );
