@@ -56,13 +56,23 @@ const createUserIntoDb = async (payload: TSignup) => {
     });
     console.log(createUserBuilder);
     const result = await createUserBuilder.save();
-    return (
-      createUserBuilder && {
-        status: true,
-        message: 'successfully create new user',
-        data: result,
-      }
-    );
+
+    if (createUserBuilder) {
+      const loginResult = await AuthServices.loginUserIntoDb(payload);
+      const { refreshToken, accessToken, user } = loginResult;
+
+      return (
+        loginResult && {
+          status: true,
+          message: 'successfully signup user',
+          data: {
+            accessToken,
+            user: user,
+          },
+        }
+      );
+      // throw new AppError(httpStatus.FORBIDDEN, 'User already exist', '');
+    }
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
