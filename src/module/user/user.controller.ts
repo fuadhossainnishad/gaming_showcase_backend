@@ -6,15 +6,24 @@ import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import { IUserUpdate } from './user.interface';
 import GameServices from '../game/game.services';
+import AuthServices from '../auth/auth.services';
 
 const createUser: RequestHandler = catchAsync(async (req, res) => {
   // console.log("login req: ",req.body);
-  const result = await UserServices.createUserIntoDb(req.body.data);
-  sendResponse(res, {
+  const { user, existed } = await UserServices.createUserIntoDb(req.body.data);
+    const loginResult = await AuthServices.loginUserIntoDb({
+    sub: user.sub,
+    name:user.name!,
+    email: user.email,
+    password: req.body.data.password, 
+  });
+sendResponse(res, {
     success: true,
-    statusCode: httpStatus.CREATED,
-    message: 'successfully create user',
-    data: result,
+    statusCode: existed ? httpStatus.OK : httpStatus.CREATED,
+    message: existed
+      ? 'User already exists, logged in successfully'
+      : 'User created and logged in successfully',
+    data: loginResult,
   });
 });
 

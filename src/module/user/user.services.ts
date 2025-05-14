@@ -30,20 +30,7 @@ const createUserIntoDb = async (payload: TSignup) => {
       isDeleted: { $ne: true },
     });
     if (isExist) {
-      const loginResult = await AuthServices.loginUserIntoDb(payload);
-      const { refreshToken, accessToken, user } = loginResult;
-
-      return (
-        loginResult && {
-          status: true,
-          message: 'successfully login user',
-          data: {
-            accessToken,
-            user: user,
-          },
-        }
-      );
-      // throw new AppError(httpStatus.FORBIDDEN, 'User already exist', '');
+      return { user:isExist, existed: true };
     }
 
     const createUserBuilder = new User({
@@ -57,22 +44,8 @@ const createUserIntoDb = async (payload: TSignup) => {
     console.log(createUserBuilder);
     const result = await createUserBuilder.save();
 
-    if (createUserBuilder) {
-      const loginResult = await AuthServices.loginUserIntoDb(payload);
-      const { refreshToken, accessToken, user } = loginResult;
+    return { user:result, existed: false };
 
-      return (
-        loginResult && {
-          status: true,
-          message: 'successfully signup user',
-          data: {
-            accessToken,
-            user: user,
-          },
-        }
-      );
-      // throw new AppError(httpStatus.FORBIDDEN, 'User already exist', '');
-    }
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
