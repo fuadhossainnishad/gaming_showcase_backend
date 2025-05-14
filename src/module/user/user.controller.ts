@@ -5,6 +5,7 @@ import sendResponse from '../../utility/sendResponse';
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import { IUserUpdate } from './user.interface';
+import GameServices from '../game/game.services';
 
 const createUser: RequestHandler = catchAsync(async (req, res) => {
   // console.log("login req: ",req.body);

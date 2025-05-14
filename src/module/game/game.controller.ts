@@ -70,15 +70,43 @@ const getAllGame: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getAllApproveGame: RequestHandler = catchAsync(async (req, res) => {
+  // if (!req.user) {
+  //   throw new AppError(
+  //     httpStatus.UNAUTHORIZED,
+  //     'Accessor is not authenticated',
+  //     '',
+  //   );
+  // }
+
+  // let result;
+
+  // if (req.user?.role === USER_ROLE.ADMIN) {
+  //   result = await GameServices.getAllGameIntoDb(req.query, false);
+  // } else {
+  //   result = await GameServices.getAllGameIntoDb(req.query, true);
+  // }
+
+  const result = await GameServices.getAllApproveGameIntoDb(req.query, true);
+
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully retrieved all approved games',
+    data: result,
+  });
+});
+
 const getUpcomingGame: RequestHandler = catchAsync(async (req, res) => {
-  if (!req.user) {
-    throw new AppError(
-      httpStatus.UNAUTHORIZED,
-      'Accessor is not authenticated',
-      '',
-    );
-  }
-  const result = await GameServices.getUpcomingGame(req.query, req.user.role);
+  // if (!req.user) {
+  //   throw new AppError(
+  //     httpStatus.UNAUTHORIZED,
+  //     'Accessor is not authenticated',
+  //     '',
+  //   );
+  // }
+  const result = await GameServices.getUpcomingGame(req.query);
 
   sendResponse(res, {
     success: true,
@@ -89,14 +117,14 @@ const getUpcomingGame: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const getSimilarGame: RequestHandler = catchAsync(async (req, res) => {
-  if (!req.user) {
-    throw new AppError(
-      httpStatus.UNAUTHORIZED,
-      'Accessor is not authenticated',
-      '',
-    );
-  }
-  const result = await GameServices.getSimilarGame(req.query, req.user.role);
+  // if (!req.user) {
+  //   throw new AppError(
+  //     httpStatus.UNAUTHORIZED,
+  //     'Accessor is not authenticated',
+  //     '',
+  //   );
+  // }
+  const result = await GameServices.getSimilarGame(req.query);
 
   sendResponse(res, {
     success: true,
@@ -223,6 +251,7 @@ const searchGame: RequestHandler = catchAsync(async (req, res) => {
 const GameController = {
   createNewGame,
   getAllGame,
+  getAllApproveGame,
   getUpcomingGame,
   getSimilarGame,
   addComment,

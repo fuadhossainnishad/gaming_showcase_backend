@@ -3,11 +3,12 @@ import { INewsletter } from './newsletter.interface';
 
 const NewsletterSchema = new Schema<INewsletter>(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
+    // userId: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: 'User',
+    //   required: true,
+    // },
+
     email: {
       type: String,
       required: [true, 'Email is required'],

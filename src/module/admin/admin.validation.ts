@@ -1,4 +1,45 @@
 import { z } from 'zod';
+import { emailRegex, linksRegex, passwordRegex } from '../../constants/regex.constants';
+
+const adminSignUpValidation = z.object({
+  body: z.object({
+    data: z.object({
+      name: z
+        .string({ required_error: 'Name is required' })
+        .min(1, 'Name is required'),
+      email: z
+        .string({ required_error: 'Email is required' })
+        .email()
+        .regex(emailRegex, 'Invalid Email'),
+      // role: z.enum([USER_ROLE.ADMIN, USER_ROLE.USER]),
+      password: z
+        .string({ required_error: 'Password is required' })
+        .min(8, 'minimum password length is 8')
+        .regex(
+          passwordRegex,
+          'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+        )
+      ,
+    }),
+  }),
+});
+
+const adminSignInValidation = z.object({
+  body: z.object({
+    data: z.object({
+      email: z
+        .string({ required_error: 'Email is required' })
+        .regex(emailRegex, 'Valid email is required'),
+      password: z
+        .string({ required_error: 'Password is required' })
+        .min(8, 'minimum password length is 8')
+        .regex(
+          passwordRegex,
+          'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+        ),
+    })
+  }),
+});
 
 const approveGameValidation = z.object({
   body: z.object({
@@ -60,6 +101,8 @@ const deleteGameValidationSchema = z.object({
 });
 
 const AdminValidationSchema = {
+  adminSignUpValidation,
+  adminSignInValidation,
   approveGameValidation,
   approveGameUpdateValidation,
   rejectGameUpdateValidation,

@@ -166,22 +166,57 @@ const getAllGameIntoDb = async (
   }
 };
 
+const getAllApproveGameIntoDb = async (
+  query: Record<string, unknown>,
+  isApproved: boolean,
+) => {
+  try {
+    // if (!Object.values(USER_ROLE).includes(role)) {
+    //   throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
+    // }
+    const baseQuery = Game.find();
+    if (isApproved === true) {
+      baseQuery.where({ isApproved: isApproved, gameStatus: 'active' });
+    }
+    // if (role !== USER_ROLE.ADMIN) {
+    //   baseQuery.where({ isApproved: true });
+    // }
+
+    const gameQuery = new QueryBuilder(baseQuery, query)
+      .search(['title', 'description'])
+      .filter()
+      .sort()
+      .pagination()
+      .fields();
+
+    const allGames = await gameQuery.modelQuery;
+    const meta = await gameQuery.countTotal();
+
+    return { meta, allGames };
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to retrieve games',
+      '',
+    );
+  }
+};
 const getUpcomingGame = async (
   query: Record<string, unknown>,
-  role: UserRole,
+  // role: UserRole,
 ) => {
   try {
     console.log('query: ', query);
-    if (!Object.values(USER_ROLE).includes(role)) {
-      throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
-    }
+    // if (!Object.values(USER_ROLE).includes(role)) {
+    //   throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
+    // }
 
-    const filter: Record<string, any> = { gameStatus: 'upcoming' };
-    if (role !== USER_ROLE.ADMIN) {
-      filter.isApproved = true;
-    }
+    const filter: Record<string, any> = { gameStatus: 'upcoming', isApproved: true };
+    // if (role !== USER_ROLE.ADMIN) {
+    //   filter.isApproved = true;
+    // }
 
-    const baseQuery = Game.find(filter).populate('userId');
+    const baseQuery = Game.find(filter);
 
     // if (role !== USER_ROLE.ADMIN) {
     //   baseQuery.where({ isApproved: true });
@@ -209,7 +244,7 @@ const getUpcomingGame = async (
 
 const getSimilarGame = async (
   query: Record<string, unknown>,
-  role: UserRole,
+  // role: UserRole,
 ) => {
   try {
     console.log('query: ', query);
@@ -222,9 +257,9 @@ const getSimilarGame = async (
       throw new AppError(httpStatus.NOT_FOUND, 'GameId is required', '');
     }
 
-    if (!Object.values(USER_ROLE).includes(role)) {
-      throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
-    }
+    // if (!Object.values(USER_ROLE).includes(role)) {
+    //   throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
+    // }
 
     const currentGame = await games.findById(gameIdObject!);
     if (!currentGame) {
@@ -240,14 +275,17 @@ const getSimilarGame = async (
       // gameStatus: 'active',
       price: { $gte: lowerBound, $lte: upperBound },
       $or: [
+        { title: currentGame.title },
+        { subTitle: currentGame.subTitle },
         { type: currentGame.platform },
         { category: currentGame.categories },
+        { isApproved: true },
       ],
     };
 
-    if (role !== USER_ROLE.ADMIN) {
-      filter.isApproved = true;
-    }
+    // if (role !== USER_ROLE.ADMIN) {
+    //   filter.isApproved = true;
+    // }
     const baseQuery = games.find(filter).populate('gameId');
 
     // if (role !== USER_ROLE.ADMIN) {
@@ -752,6 +790,8 @@ const searchGameIntoDb = async (query: Record<string, unknown>) => {
   const { searchTerm } = query;
 
   const games = await Game.find({
+    isApproved: true,
+    isDelete: false,
     $or: [
       { title: { $regex: searchTerm, $options: 'i' } },
       { subtitle: { $regex: searchTerm, $options: 'i' } },
@@ -764,6 +804,7 @@ const searchGameIntoDb = async (query: Record<string, unknown>) => {
 const GameServices = {
   createNewGameIntoDb,
   getAllGameIntoDb,
+  getAllApproveGameIntoDb,
   getUpcomingGame,
   getSimilarGame,
   userComment,

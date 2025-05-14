@@ -14,84 +14,84 @@ const router = express.Router();
 
 router.post(
   '/signup',
-  validationRequest(userValidation.userSignUpValidation),
+  validationRequest(AdminValidationSchema.adminSignUpValidation),
   AdminController.createAdmin,
 );
 
 router.post(
   '/login',
-  validationRequest(AuthValidationSchema.userSignInValidation),
+  validationRequest(AdminValidationSchema.adminSignInValidation),
   AdminController.loginAdmin,
 );
 
-router.get('/getAllGame', auth(USER_ROLE.ADMIN), GameController.getAllGame);
+router.get('/getAllGame', GameController.getAllGame);
 
 router.get('/find_all_users', UserController.findAllUser);
 
 router.post(
   '/approveGame',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.approveGameValidation),
   AdminController.approveGameByAdmin,
 );
 
 router.get(
   '/pending-game-updates',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   AdminController.getPendingGameUpdates,
 );
 
 router.post(
   '/approve-game-update',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.approveGameUpdateValidation),
   AdminController.approveGameUpdateByAdmin,
 );
 
 router.delete(
   '/reject-game-update',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.rejectGameUpdateValidation),
   AdminController.rejectGameUpdateByAdmin,
 );
 
 router.get(
   '/pending-profile-updates',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   AdminController.getPendingProfileUpdates,
 );
 
 router.post(
   '/approve-profile-update',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.approveProfileUpdateValidation),
   AdminController.approveProfileUpdateByAdmin,
 );
 
 router.delete(
   '/reject-profile-update',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.rejectProfileUpdateValidation),
   AdminController.rejectProfileUpdateByAdmin,
 );
 
 router.delete(
   '/delete-game',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.deleteGameValidationSchema),
   AdminController.deleteGameByAdmin,
 );
 
 router.delete(
   '/delete-user',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.deleteUserValidationSchema),
   AdminController.deleteUserByAdmin,
 );
 
 router.get(
   '/dashboard',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   AdminController.getDashboardStats,
 );
 

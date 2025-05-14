@@ -14,7 +14,7 @@ export const addNewsletterMail = async (userId: string, payload: TNewsLater) => 
     const { email } = payload;
     console.log(userId);
 
-    const userIdObject = await idConverter(userId)
+    // const userIdObject = await idConverter(userId)
 
     const isExist = await NewsLetter.findOne({
       email,
@@ -24,7 +24,7 @@ export const addNewsletterMail = async (userId: string, payload: TNewsLater) => 
     if (isExist) {
       throw new AppError(httpStatus.FORBIDDEN, 'Mail already exist', '');
     }
-    const addNewsletterMailBuilder = new NewsLetter({ userId: userIdObject, email: email });
+    const addNewsletterMailBuilder = new NewsLetter({ email: email });
     console.log(addNewsletterMailBuilder);
     const result = await addNewsletterMailBuilder.save();
     return (

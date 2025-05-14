@@ -53,6 +53,8 @@ router.post(
 
 router.get('/getAllGame', GameController.getAllGame);
 
+router.get('/getAllApprovedGame', GameController.getAllApproveGame);
+
 router.get(
   '/getUpcomingGame',
   // auth(USER_ROLE.USER, USER_ROLE.ADMIN),

@@ -100,11 +100,11 @@ const getPendingProfileUpdates: RequestHandler = catchAsync(
 
 const approveProfileUpdateByAdmin: RequestHandler = catchAsync(
   async (req, res) => {
-    console.log('approveProfileUpdateByAdmin:', req.user?.id!);
+    // console.log('approveProfileUpdateByAdmin:', req.user?.id!);
 
-    if (!req.user) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
-    }
+    // if (!req.user) {
+    //   throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
+    // }
     const result = await AdminServices.approveProfileUpdate(
       req.user?.id!,
       req.body.data,

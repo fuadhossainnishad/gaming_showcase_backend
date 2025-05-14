@@ -284,7 +284,7 @@ const rejectGameUpdate = async (updateId: string) => {
 
 const getPendingProfileUpdates = async () => {
   const updates = await PendingUserUpdate.find({ status: 'pending' }).populate(
-    'id',
+    '_id',
     'email name',
   );
   return updates;
@@ -307,13 +307,13 @@ const approveProfileUpdate = async (
       );
     }
 
-    const admin = await Admin.findById(await idConverter(adminId!)).where({
-      isDeleted: { $ne: true },
-      role: USER_ROLE.ADMIN,
-    });
-    if (!admin) {
-      throw new AppError(httpStatus.FORBIDDEN, 'Admin user not found', '');
-    }
+    // const admin = await Admin.findById(await idConverter(adminId!)).where({
+    //   isDeleted: { $ne: true },
+    //   role: USER_ROLE.ADMIN,
+    // });
+    // if (!admin) {
+    //   throw new AppError(httpStatus.FORBIDDEN, 'Admin user not found', '');
+    // }
 
     const pendingUpdate = await PendingUserUpdate.findById(updateIdObject);
     if (!pendingUpdate) {
@@ -378,7 +378,6 @@ const approveProfileUpdate = async (
 
     await PendingUserUpdate.findByIdAndUpdate(payload.updateId, {
       status: 'approved',
-      reviewedBy: await idConverter(adminId),
       reviewedAt: new Date(),
     });
 
@@ -395,10 +394,10 @@ const approveProfileUpdate = async (
 
 const rejectProfileUpdate = async (adminId: string, updateId: string) => {
   const updateIdObject = await idConverter(updateId);
-  const adminIdObject = await idConverter(adminId);
+  // const adminIdObject = await idConverter(adminId);
 
-  if (!updateIdObject || !adminIdObject) {
-    throw new AppError(httpStatus.NOT_FOUND, 'AdminId & UserId required', '');
+  if (!updateIdObject) {
+    throw new AppError(httpStatus.NOT_FOUND, 'UpdateId is required', '');
   }
 
   const pendingUpdate = await PendingUserUpdate.findById(updateIdObject);
@@ -414,8 +413,10 @@ const rejectProfileUpdate = async (adminId: string, updateId: string) => {
     );
   }
 
-  await PendingUserUpdate.deleteOne(updateIdObject);
-
+  await PendingUserUpdate.findByIdAndUpdate(updateIdObject, {
+    status: 'rejected',
+    reviewedAt: new Date(),
+  });
   return { message: 'Profile update rejected successfully' };
 };
 

@@ -9,13 +9,14 @@ import { USER_ROLE } from './user.constant';
 
 const router = express.Router();
 
-router.post(
-  '/signup',
+router.post('/signup',
   validationRequest(userValidation.userSignUpValidation),
   UserController.createUser,
 );
 
-router.get('/user-profile', auth(USER_ROLE.USER), UserController.userProfile);
+router.get('/user-profile',
+  auth(USER_ROLE.USER),
+  UserController.userProfile);
 
 router.patch(
   '/update_profile',
@@ -25,8 +26,7 @@ router.patch(
   UserController.updateProfileUser,
 );
 
-router.delete(
-  '/delete-user',
+router.delete('/delete-user',
   auth(USER_ROLE.USER),
   validationRequest(userValidation.userDeleteValidation),
   UserController.deleteUserProfile,
