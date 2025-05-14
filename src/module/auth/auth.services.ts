@@ -13,8 +13,9 @@ import bcrypt from 'bcrypt';
 import { sendMail } from '../../app/mailer/sendMail';
 import { emailRegex } from '../../constants/regex.constants';
 import { idConverter } from '../../utility/idCoverter';
+import { TSignup } from '../user/user.interface';
 
-const loginUserIntoDb = async (payload: TAuth) => {
+const loginUserIntoDb = async (payload: TSignup) => {
   // console.log(payload);
 
   const isUserExist = await User.findOne(

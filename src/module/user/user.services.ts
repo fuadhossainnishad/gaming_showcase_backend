@@ -16,6 +16,8 @@ import PendingUserUpdate from './userUpdateProfile';
 import MediaUrl from '../../utility/game.media';
 import { idConverter } from '../../utility/idCoverter';
 import { SocialLinksInterface } from '../game/game.interface';
+import AuthServices from '../auth/auth.services';
+import AuthController from '../auth/auth.controller';
 
 const createUserIntoDb = async (payload: TSignup) => {
   try {
@@ -28,7 +30,20 @@ const createUserIntoDb = async (payload: TSignup) => {
       isDeleted: { $ne: true },
     });
     if (isExist) {
-      throw new AppError(httpStatus.FORBIDDEN, 'User already exist', '');
+      const loginResult = await AuthServices.loginUserIntoDb(payload);
+      const { refreshToken, accessToken, user } = loginResult;
+
+      return (
+        loginResult && {
+          status: true,
+          message: 'successfully login user',
+          data: {
+            accessToken,
+            user: user,
+          },
+        }
+      );
+      // throw new AppError(httpStatus.FORBIDDEN, 'User already exist', '');
     }
 
     const createUserBuilder = new User({
