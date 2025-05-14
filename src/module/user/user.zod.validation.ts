@@ -9,6 +9,7 @@ import {
 const userSignUpValidation = z.object({
   body: z.object({
     data: z.object({
+      sub: z.string({ required_error: 'Sub is required' }),
       name: z
         .string({ required_error: 'Name is required' })
         .min(1, 'Name is required'),
@@ -23,13 +24,20 @@ const userSignUpValidation = z.object({
         .regex(
           passwordRegex,
           'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-        ),
+        )
+        .optional(),
+      photo: z
+        .string()
+        .url()
+        .regex(linksRegex, 'Link must be valid')
+        .optional(),
     }),
   }),
 });
 
 const userSignInValidation = z.object({
   body: z.object({
+    sub: z.string({ required_error: 'Sub is required' }),
     email: z
       .string({ required_error: 'Email is required' })
       .regex(emailRegex, 'Valid email is required'),
@@ -39,45 +47,51 @@ const userSignInValidation = z.object({
       .regex(
         passwordRegex,
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-      ),
+      )
+      .optional(),
   }),
 });
 
 const userDeleteValidation = z.object({
   body: z.object({
     data: z.object({
-      userId: z
-        .string({ required_error: 'Email is required' })
-    })
+      userId: z.string({ required_error: 'Email is required' }),
+    }),
   }),
 });
 
 const userProfileUpdateValidation = z.object({
   body: z
     .object({
-      data: z.object({
-        name: z
-          .string({ required_error: 'Name is required' })
-          .min(1, 'Name is required')
-          .optional(),
-        userName: z.string().optional(),
-        bio: z.string().optional(),
-        links: z
-          .array(
-            z.object({
-              name: z.string().min(1, 'Link name is required'),
-              link: z
-                .string()
-                .url('Each link must be a valid URL')
-                .regex(linksRegex, 'Each link must match the allowed format'),
-            }),
-          )
-          .max(5, 'Maximum 5 links are allowed')
-          .refine((links) => new Set(links.map((l) => l.link)).size === links.length, {
-            message: 'Links must be unique',
-          })
-          .optional(),
-      }).optional(),
+      data: z
+        .object({
+          name: z
+            .string({ required_error: 'Name is required' })
+            .min(1, 'Name is required')
+            .optional(),
+          userName: z.string().optional(),
+          bio: z.string().optional(),
+          links: z
+            .array(
+              z.object({
+                name: z.string().min(1, 'Link name is required'),
+                link: z
+                  .string()
+                  .url('Each link must be a valid URL')
+                  .regex(linksRegex, 'Each link must match the allowed format'),
+              }),
+            )
+            .max(5, 'Maximum 5 links are allowed')
+            .refine(
+              (links) =>
+                new Set(links.map((l) => l.link)).size === links.length,
+              {
+                message: 'Links must be unique',
+              },
+            )
+            .optional(),
+        })
+        .optional(),
     })
     // .strict({ message: 'Only name,username, bio, links are allowed' })
     .refine(

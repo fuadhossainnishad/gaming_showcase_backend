@@ -5,6 +5,7 @@ import httpStatus from 'http-status';
 import sendResponse from '../../utility/sendResponse';
 import AppError from '../../app/error/AppError';
 import { RequestHandler } from 'express';
+import { USER_ROLE } from '../user/user.constant';
 
 const createNewGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   console.log('GameController.createNewGame - Inputs:', {
@@ -31,7 +32,10 @@ const createNewGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'User ID is required', '');
   }
 
-  const result = await GameServices.createNewGameIntoDb(req, userId.toString()!);
+  const result = await GameServices.createNewGameIntoDb(
+    req,
+    userId.toString()!,
+  );
 
   sendResponse(res, {
     success: true,
@@ -42,14 +46,21 @@ const createNewGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
 });
 
 const getAllGame: RequestHandler = catchAsync(async (req, res) => {
-  if (!req.user) {
-    throw new AppError(
-      httpStatus.UNAUTHORIZED,
-      'Accessor is not authenticated',
-      '',
-    );
+  // if (!req.user) {
+  //   throw new AppError(
+  //     httpStatus.UNAUTHORIZED,
+  //     'Accessor is not authenticated',
+  //     '',
+  //   );
+  // }
+
+  let result;
+
+  if (req.user?.role === USER_ROLE.ADMIN) {
+    result = await GameServices.getAllGameIntoDb(req.query, false);
+  } else {
+    result = await GameServices.getAllGameIntoDb(req.query, true);
   }
-  const result = await GameServices.getAllGameIntoDb(req.query, req.user?.role);
 
   sendResponse(res, {
     success: true,
@@ -113,7 +124,10 @@ const addCommentUpvote: RequestHandler = catchAsync(async (req, res) => {
   console.log('add comment upvote: ', req.body);
   // console.log(req.user);
 
-  const result = await GameServices.userCommentUpvote(req.body.data, req.user?._id!);
+  const result = await GameServices.userCommentUpvote(
+    req.body.data,
+    req.user?._id!,
+  );
 
   sendResponse(res, {
     success: true,
@@ -186,6 +200,26 @@ const updateGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   });
 });
 
+const searchGame: RequestHandler = catchAsync(async (req, res) => {
+  if (!req.query) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Search query can not be empty string',
+      '',
+    );
+  }
+  console.log(req.query);
+
+  const result = await GameServices.searchGameIntoDb(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully retrieved searched games',
+    data: result,
+  });
+});
+
 const GameController = {
   createNewGame,
   getAllGame,
@@ -197,6 +231,7 @@ const GameController = {
   getTopGameOfDay,
   getTopGameOfWeek,
   updateGame,
+  searchGame,
 };
 
 export default GameController;

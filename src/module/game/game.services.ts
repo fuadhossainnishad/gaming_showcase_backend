@@ -132,17 +132,19 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
 
 const getAllGameIntoDb = async (
   query: Record<string, unknown>,
-  role: UserRole,
+  isApproved: boolean,
 ) => {
   try {
-    if (!Object.values(USER_ROLE).includes(role)) {
-      throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
+    // if (!Object.values(USER_ROLE).includes(role)) {
+    //   throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
+    // }
+    const baseQuery = Game.find();
+    if (isApproved === true) {
+      baseQuery.where({ isApproved: isApproved });
     }
-    const baseQuery = games.find().populate('userId');
-
-    if (role !== USER_ROLE.ADMIN) {
-      baseQuery.where({ isApproved: true });
-    }
+    // if (role !== USER_ROLE.ADMIN) {
+    //   baseQuery.where({ isApproved: true });
+    // }
 
     const gameQuery = new QueryBuilder(baseQuery, query)
       .search(['title', 'description'])
@@ -179,7 +181,7 @@ const getUpcomingGame = async (
       filter.isApproved = true;
     }
 
-    const baseQuery = games.find(filter).populate('userId');
+    const baseQuery = Game.find(filter).populate('userId');
 
     // if (role !== USER_ROLE.ADMIN) {
     //   baseQuery.where({ isApproved: true });
@@ -331,7 +333,10 @@ const userComment = async (payload: CommentPayload, userId: string) => {
   }
 };
 
-const userCommentUpvote = async (payload: CommentUpvotePayload, userId: string) => {
+const userCommentUpvote = async (
+  payload: CommentUpvotePayload,
+  userId: string,
+) => {
   try {
     if (!payload.gameId || !payload.commentId) {
       throw new AppError(
@@ -738,6 +743,24 @@ const updateGameIntoDb = async (
   return pendingUpdate;
 };
 
+const searchGameIntoDb = async (query: Record<string, unknown>) => {
+  console.log('query: ', query);
+  if (!query) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Search term is required', '');
+  }
+
+  const { searchTerm } = query;
+
+  const games = await Game.find({
+    $or: [
+      { title: { $regex: searchTerm, $options: 'i' } },
+      { subtitle: { $regex: searchTerm, $options: 'i' } },
+    ],
+  });
+
+  return games;
+};
+
 const GameServices = {
   createNewGameIntoDb,
   getAllGameIntoDb,
@@ -749,6 +772,7 @@ const GameServices = {
   getTopGameOfDay,
   getTopGameOfWeek,
   updateGameIntoDb,
+  searchGameIntoDb,
 };
 
 export default GameServices;

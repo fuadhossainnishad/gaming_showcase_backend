@@ -1,11 +1,15 @@
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import User from '../user/user.model';
-import { TAuth, TUpdateUserPassword, TVerifyForgotPassword } from './auth.constant';
+import {
+  TAuth,
+  TUpdateUserPassword,
+  TVerifyForgotPassword,
+} from './auth.constant';
 import config from '../../app/config';
 import { jwtHelpers } from '../../app/jwtHalpers/jwtHalpers';
 import ForgotPassword from './auth.model';
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
 import { sendMail } from '../../app/mailer/sendMail';
 import { emailRegex } from '../../constants/regex.constants';
 import { idConverter } from '../../utility/idCoverter';
@@ -14,26 +18,28 @@ const loginUserIntoDb = async (payload: TAuth) => {
   // console.log(payload);
 
   const isUserExist = await User.findOne(
-    { email: payload.email },
-    { password: 1, _id: 1, email: 1, role: 1 },
+    { sub: payload.sub, email: payload.email },
+    { sub: 1, password: 1, _id: 1, email: 1, role: 1 },
   );
 
   if (!isUserExist) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
   }
 
-  const userId = isUserExist._id
+  const userId = isUserExist._id;
   console.log(userId);
 
-  const loginUserData = await User.findById({ _id: userId })
+  const loginUserData = await User.findById({ _id: userId });
 
-  const isPasswordValid = await User.isPasswordMatched(
-    payload.password,
-    isUserExist.password,
-  );
+  if (payload.password) {
+    const isPasswordValid = await User.isPasswordMatched(
+      payload.password,
+      isUserExist.password!,
+    );
 
-  if (!isPasswordValid) {
-    throw new AppError(httpStatus.FORBIDDEN, 'This Password Not Matched', '');
+    if (!isPasswordValid) {
+      throw new AppError(httpStatus.FORBIDDEN, 'This Password Not Matched', '');
+    }
   }
 
   const jwtPayload = {
@@ -53,17 +59,16 @@ const loginUserIntoDb = async (payload: TAuth) => {
     config.jwt_refresh_secret as string,
     config.refresh_expires_in as string,
   );
-  console.log("isUserExist: ", isUserExist)
+  console.log('isUserExist: ', isUserExist);
   return {
     accessToken,
     refreshToken,
-    user: loginUserData
+    user: loginUserData,
   };
 };
 
 const requestForgotPassword = async (email: string) => {
-
-  console.log("email: ", email);
+  console.log('email: ', email);
 
   if (!emailRegex.test(email)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid email format', '');
@@ -78,7 +83,7 @@ const requestForgotPassword = async (email: string) => {
 
   await ForgotPassword.deleteMany({ email });
 
-  const subject = 'forgote password'
+  const subject = 'forgote password';
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2>Password Reset Request</h2>
@@ -106,7 +111,7 @@ const requestForgotPassword = async (email: string) => {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       'Failed to process password reset request',
-      error as any
+      error as any,
     );
   }
 };
@@ -148,11 +153,10 @@ const verifyForgotPassword = async (payload: TVerifyForgotPassword) => {
 };
 
 const updateUserPassword = async (payload: TUpdateUserPassword) => {
-
-  const { userId, password, newPassword } = payload
+  const { userId, password, newPassword } = payload;
   console.log(userId);
 
-  const userIdObject = await idConverter(userId!)
+  const userIdObject = await idConverter(userId!);
   const user = await User.findOne(
     { _id: userIdObject, isDeleted: { $ne: true } },
     { password: 1, email: 1 },
@@ -164,11 +168,15 @@ const updateUserPassword = async (payload: TUpdateUserPassword) => {
 
   const isPasswordValid = await User.isPasswordMatched(
     password,
-    user.password,
+    user?.password!,
   );
 
   if (!isPasswordValid) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Current password is incorrect', '');
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Current password is incorrect',
+      '',
+    );
   }
 
   const hashedNewPassword = await bcrypt.hash(
@@ -193,7 +201,7 @@ const AuthServices = {
   loginUserIntoDb,
   requestForgotPassword,
   verifyForgotPassword,
-  updateUserPassword
+  updateUserPassword,
 };
 
 export default AuthServices;

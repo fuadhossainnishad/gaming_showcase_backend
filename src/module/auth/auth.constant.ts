@@ -1,8 +1,9 @@
-import { Types } from "mongoose";
+import { Types } from 'mongoose';
 
 export type TAuth = {
-    email: string;
-    password: string;
+  sub: string;
+  email: string;
+  password?: string;
 };
 
 export type TForgotPassword = {

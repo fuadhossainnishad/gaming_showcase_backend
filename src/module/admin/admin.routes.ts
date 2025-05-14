@@ -8,6 +8,7 @@ import { USER_ROLE } from '../user/user.constant';
 import AuthValidationSchema from '../auth/auth.validation';
 import AuthController from '../auth/auth.controller';
 import { userValidation } from '../user/user.zod.validation';
+import UserController from '../user/user.controller';
 
 const router = express.Router();
 
@@ -24,6 +25,8 @@ router.post(
 );
 
 router.get('/getAllGame', auth(USER_ROLE.ADMIN), GameController.getAllGame);
+
+router.get('/find_all_users', UserController.findAllUser);
 
 router.post(
   '/approveGame',
@@ -76,7 +79,7 @@ router.delete(
   '/delete-game',
   auth(USER_ROLE.ADMIN),
   validationRequest(AdminValidationSchema.deleteGameValidationSchema),
-  AdminController.deleteUserByAdmin,
+  AdminController.deleteGameByAdmin,
 );
 
 router.delete(

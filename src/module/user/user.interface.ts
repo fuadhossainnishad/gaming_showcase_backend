@@ -3,23 +3,26 @@ import { USER_ROLE } from './user.constant';
 import { GameInterface, SocialLinksInterface } from '../game/game.interface';
 
 export type TSignup = {
+  sub: string;
   name: string;
   email: string;
-  password: string;
+  password?: string;
+  photo?: string;
 };
 
 export interface CommentInterface {
-  gameId: Types.ObjectId
-  comment: string
-  createdAt: Date
+  gameId: Types.ObjectId;
+  comment: string;
+  createdAt: Date;
 }
 
 export interface IUser {
   // id?: Types.ObjectId;
+  sub: string;
   name?: string;
   userName?: string;
   email: string;
-  password: string;
+  password?: string;
   role: string;
   bio?: string;
   links?: SocialLinksInterface[];
@@ -28,8 +31,8 @@ export interface IUser {
   uploadedGame?: GameInterface[];
   upVotedGame: GameInterface[];
   upVotedComment: GameInterface[];
-  commentedGame: GameInterface[]
-  comments: CommentInterface[]
+  commentedGame: GameInterface[];
+  comments: CommentInterface[];
   isDeleted?: boolean;
 }
 

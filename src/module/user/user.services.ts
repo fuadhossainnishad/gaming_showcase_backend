@@ -20,7 +20,7 @@ import { SocialLinksInterface } from '../game/game.interface';
 const createUserIntoDb = async (payload: TSignup) => {
   try {
     console.log(payload);
-    const { name, email, password } = payload;
+    const { sub, name, email, password, photo } = payload;
     const role = USER_ROLE.USER;
     const isExist = await User.findOne({
       email,
@@ -31,14 +31,21 @@ const createUserIntoDb = async (payload: TSignup) => {
       throw new AppError(httpStatus.FORBIDDEN, 'User already exist', '');
     }
 
-    const createUserBuilder = new User({ name, email, password, role });
+    const createUserBuilder = new User({
+      sub,
+      name,
+      email,
+      password,
+      role,
+      photo,
+    });
     console.log(createUserBuilder);
     const result = await createUserBuilder.save();
     return (
       createUserBuilder && {
         status: true,
         message: 'successfully create new user',
-        data: result
+        data: result,
       }
     );
   } catch (error: any) {
@@ -76,8 +83,7 @@ const userProfile = async (userId: string) => {
   if (!userId) {
     throw new AppError(httpStatus.NO_CONTENT, 'Invalid userId', '');
   }
-  const userIdObject = await idConverter(userId)
-
+  const userIdObject = await idConverter(userId);
 
   const findUser = await User.findById(userIdObject)
     .populate({
@@ -116,18 +122,22 @@ const deleteUserIntoDb = async (userId: string, authUserId: string) => {
   }
 
   if (userId != authUserId) {
-    throw new AppError(httpStatus.NO_CONTENT, 'Provided userId and user not same', '');
+    throw new AppError(
+      httpStatus.NO_CONTENT,
+      'Provided userId and user not same',
+      '',
+    );
   }
-  const userIdObject = await idConverter(userId)
+  const userIdObject = await idConverter(userId);
 
-  const userExist = await User.findById(userIdObject)
+  const userExist = await User.findById(userIdObject);
   if (!userExist) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
   }
 
-  await User.deleteOne({ _id: userIdObject })
+  await User.deleteOne({ _id: userIdObject });
 
-  const userdeletd = await User.findById(userIdObject)
+  const userdeletd = await User.findById(userIdObject);
 
   if (userdeletd) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not deleted', '');
@@ -144,7 +154,6 @@ const updateUserProfileIntoDb = async (
   session.startTransaction();
 
   try {
-
     const { links, ...updateFields } = payload;
     let parsedLinks: SocialLinksInterface[] | undefined = links;
 
@@ -169,7 +178,7 @@ const updateUserProfileIntoDb = async (
     //   );
     // }
 
-    const userIdObject = await idConverter(userId)
+    const userIdObject = await idConverter(userId);
 
     const existingUser = await User.findOne({
       _id: userIdObject,
@@ -227,6 +236,7 @@ const updateUserProfileIntoDb = async (
     session.endSession();
   }
 };
+
 const submitProfileUpdate = async (
   userId: string,
   payload: IPendingUserUpdate,
@@ -262,6 +272,7 @@ const submitProfileUpdate = async (
   const pendingUpdate = await PendingUserUpdate.create(updateData);
   return pendingUpdate;
 };
+
 const UserServices = {
   createUserIntoDb,
   findAllUserIntoDb,

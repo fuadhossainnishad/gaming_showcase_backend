@@ -5,7 +5,6 @@ import { USER_ROLE } from './user.constant';
 import { IUser, IUserModel } from './user.interface';
 import { linksRegex } from '../../constants/regex.constants';
 
-
 const userSchema = new Schema<IUser, IUserModel>(
   {
     // id: {
@@ -14,6 +13,11 @@ const userSchema = new Schema<IUser, IUserModel>(
     //   sparse: true,
     //   unique: true
     // },
+    sub: {
+      type: String,
+      required: [true, 'sub is required'],
+      unique: true,
+    },
     name: {
       type: String,
       required: [true, 'name is Required'],
@@ -25,11 +29,11 @@ const userSchema = new Schema<IUser, IUserModel>(
     email: {
       type: String,
       required: [true, 'Email is Required'],
-      unique:true,
+      unique: true,
     },
     password: {
       type: String,
-      required: [true, 'password is Required'],
+      required: [false, 'password is not Required'],
       select: false,
     },
     role: {
@@ -114,7 +118,7 @@ const userSchema = new Schema<IUser, IUserModel>(
             type: Date,
             default: Date.now,
           },
-        }
+        },
       ],
       required: false,
       default: [],

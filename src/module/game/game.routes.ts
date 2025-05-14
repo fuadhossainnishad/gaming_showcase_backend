@@ -51,32 +51,39 @@ router.post(
   GameController.addShare,
 );
 
-router.get('/getAllGame', auth(USER_ROLE.USER), GameController.getAllGame);
+router.get('/getAllGame', GameController.getAllGame);
 
 router.get(
   '/getUpcomingGame',
-  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
+  // auth(USER_ROLE.USER, USER_ROLE.ADMIN),
   GameController.getUpcomingGame,
 );
 
 router.get(
   '/getSimilarGame',
-  auth(USER_ROLE.USER, USER_ROLE.ADMIN),
+  // auth(USER_ROLE.USER, USER_ROLE.ADMIN),
   GameController.getSimilarGame,
 );
 
 router.get(
   '/top-game/day',
-  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  // auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   // validationRequest(GameValidationSchema.TopGameQuerySchema),
   GameController.getTopGameOfDay,
 );
 
 router.get(
   '/top-game/week',
-  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  // auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   // validationRequest(GameValidationSchema.TopGameQuerySchema),
   GameController.getTopGameOfWeek,
+);
+
+router.get(
+  '/search-game',
+  // auth(USER_ROLE.ADMIN, USER_ROLE.USER),
+  // validationRequest(GameValidationSchema.TopGameQuerySchema),
+  GameController.searchGame,
 );
 
 const GameRouter = router;

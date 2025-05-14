@@ -9,11 +9,10 @@ import { verify } from 'jsonwebtoken';
 import { log } from 'console';
 
 const loginUser: RequestHandler = catchAsync(async (req, res) => {
-  console.log("login req: ", req);
+  console.log('login req: ', req);
 
   const result = await AuthServices.loginUserIntoDb(req.body.data);
   console.log(req.body?.data!);
-
 
   const { refreshToken, accessToken, user } = result;
   res.cookie('refreshToken', refreshToken, {
@@ -26,16 +25,17 @@ const loginUser: RequestHandler = catchAsync(async (req, res) => {
     message: 'Successfully Login',
     data: {
       accessToken,
-      user: user
+      user: user,
     },
   });
 });
 
 const requestForgotPassword: RequestHandler = catchAsync(async (req, res) => {
-
   console.log(req.body.data?.email!);
 
-  const result = await AuthServices.requestForgotPassword(req.body.data?.email!);
+  const result = await AuthServices.requestForgotPassword(
+    req.body.data?.email!,
+  );
 
   sendResponse(res, {
     success: true,
@@ -69,7 +69,7 @@ const AuthController = {
   loginUser,
   requestForgotPassword,
   verifyForgotPassword,
-  updateUserPassword
+  updateUserPassword,
 };
 
 export default AuthController;

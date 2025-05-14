@@ -135,7 +135,9 @@ const rejectProfileUpdateByAdmin: RequestHandler = catchAsync(
 );
 
 const deleteUserByAdmin: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AdminServices.deleteUser(req.body.data.id);
+  console.log(req.body.data?.userId!);
+
+  const result = await AdminServices.deleteUser(req.body.data?.userId!);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -145,11 +147,12 @@ const deleteUserByAdmin: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const deleteGameByAdmin: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AdminServices.deleteUser(req.body.data.id);
+  console.log(req.body.data?.gameId!);
+  const result = await AdminServices.deleteGame(req.body.data?.gameId!);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'User deleted successfully',
+    message: 'Game deleted successfully',
     data: result,
   });
 });

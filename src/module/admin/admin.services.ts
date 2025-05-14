@@ -47,7 +47,7 @@ const createAdminIntoDb = async (payload: IAdmin) => {
 
 const loginAdminIntoDb = async (payload: TAuth) => {
   const isAdminExist = await Admin.findOne(
-    { email: payload.email },
+    { sub: payload.sub, email: payload.email },
     { password: 1, _id: 1, email: 1, role: 1 },
   );
 
@@ -55,13 +55,15 @@ const loginAdminIntoDb = async (payload: TAuth) => {
     throw new AppError(httpStatus.NOT_FOUND, 'Admin not found', '');
   }
 
-  const isPasswordValid = await User.isPasswordMatched(
-    payload.password,
-    isAdminExist.password,
-  );
+  if (payload.password) {
+    const isPasswordValid = await User.isPasswordMatched(
+      payload.password,
+      isAdminExist.password,
+    );
 
-  if (!isPasswordValid) {
-    throw new AppError(httpStatus.FORBIDDEN, 'This Password Not Matched', '');
+    if (!isPasswordValid) {
+      throw new AppError(httpStatus.FORBIDDEN, 'This Password Not Matched', '');
+    }
   }
 
   const jwtPayload = {
@@ -419,14 +421,17 @@ const rejectProfileUpdate = async (adminId: string, updateId: string) => {
 
 const deleteUser = async (userId: string) => {
   const userIdObject = await idConverter(userId);
+  console.log('userIdObject: ', userIdObject);
 
   const findUser = await User.find({ _id: userIdObject });
 
-  if (!findUser) {
+  if (findUser.length === 0) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
   }
-  const deleteUser = await User.deleteOne({ _id: userIdObject });
-  if (!deleteUser) {
+  const deleteResult = await User.deleteOne({ _id: userIdObject });
+  console.log('Delete result:', deleteResult);
+
+  if (deleteResult.deletedCount === 0) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not deleted', '');
   }
 
@@ -443,24 +448,23 @@ const deleteUser = async (userId: string) => {
 
 const deleteGame = async (gameId: string) => {
   const gameIdObject = await idConverter(gameId);
+
+  console.log('gameIdObject: ', gameIdObject);
+
   const findGame = await Game.find({ _id: gameIdObject });
-  if (!findGame) {
+
+  if (findGame.length === 0) {
     throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
   }
-  const deleteUser = await Game.deleteOne({ _id: gameIdObject });
-  if (!deleteUser) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Game not deleted', '');
+
+  const deleteResult = await Game.deleteOne({ _id: gameIdObject });
+  console.log('Delete result:', deleteResult);
+
+  if (deleteResult.deletedCount === 0) {
+    throw new Error('Game not found or deletion failed.');
   }
 
-  // if (pendingUpdate.status !== 'pending') {
-  //   throw new AppError(
-  //     httpStatus.BAD_REQUEST,
-  //     'Update is not in pending status',
-  //     '',
-  //   );
-  // }
-
-  return deleteGame;
+  return { success: true, message: 'Game deleted successfully' };
 };
 
 const getDashboardStats = async () => {
