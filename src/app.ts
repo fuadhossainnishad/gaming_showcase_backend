@@ -4,7 +4,6 @@ import notFound from './middleware/notFound';
 import globalErrorHandelar from './middleware/globalErrorHandelar';
 import router from './router';
 import helmet from 'helmet';
-
 import cookieParser from 'cookie-parser';
 
 const app = express();
@@ -15,10 +14,9 @@ app.use(cookieParser());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-//middlewere
-//credentials:true
-//https://shoes-client.vercel.app
 app.use(cors());
+
+app.use('/src/uploads', express.static('src/uploads'));
 
 app.get('/', (req, res) => {
   res.send({
@@ -26,8 +24,6 @@ app.get('/', (req, res) => {
     message: 'Well Come To Contruct Management Server',
   });
 });
-// username : contract_management
-// password: eIvMMRHLOP5wjaH7
 
 // Error Handeller
 

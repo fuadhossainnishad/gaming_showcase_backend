@@ -8,7 +8,7 @@ const storage = (destination: string) =>
       const userId =
         req.body.data && typeof req.body.data === 'string'
           ? JSON.parse(req.body.data).userId
-          : req.body.data?.userId || 'unknown';
+          : req.body.data?.userId! || 'unknown';
       const subDir = file.fieldname === 'image' ? 'images' : 'thumbnails';
       const uploadPath = path.join(
         process.cwd(),

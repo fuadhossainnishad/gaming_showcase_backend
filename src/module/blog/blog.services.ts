@@ -32,7 +32,7 @@ const createNewBlogIntoDb = async (req: RequestWithFiles) => {
   const blogImageFiles = files?.blogImage || [];
   const blogImage =
     blogImageFiles.length > 0
-      ? MediaUrl.profileMediaUrl(blogImageFiles[0].path, 'blogs')
+      ? MediaUrl.blogMediaUrl(blogImageFiles[0].path)
       : '';
   const blogData: BlogInterface = {
     author: data.author || 'Unknown',
@@ -120,9 +120,8 @@ const updateBlogIntoDb = async (
     if (payload.author) updateFields.author = payload.author;
 
     if (file) {
-      updateFields.blogImage = MediaUrl.profileMediaUrl(
+      updateFields.blogImage = MediaUrl.blogMediaUrl(
         file.path,
-        payload.blogId,
       );
     }
 
@@ -149,10 +148,41 @@ const updateBlogIntoDb = async (
   }
 };
 
+const deleteBlogIntoDb = async (blogId: string) => {
+  if (!blogId) {
+    throw new AppError(httpStatus.NOT_FOUND, 'BlogId is required', '')
+  }
+  const blogIdObject = await idConverter(blogId)
+  const isExist = Blog.findById(blogIdObject)
+  if (!isExist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Blog not exist in database', '')
+  }
+  const deleteBlog = await Blog.deleteOne({ _id: blogIdObject, isDeleted: { $ne: true } })
+  if (deleteBlog.deletedCount === 0) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Blog not deleted yet from database', '')
+  }
+  return { success: true, message: 'Blog deleted successfully' };
+}
+
+const deleteAllBlogIntoDb = async () => {
+
+  const blogs = await Blog.find()
+  if (!blogs || blogs.length === 0) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No blog exist in database', '')
+  }
+  const deleteBlog = await Blog.deleteMany({ isDeleted: { $ne: true } })
+  if (deleteBlog.deletedCount === 0) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Blog not deleted yet from database', '')
+  }
+  return { success: true, message: 'All blog deleted successfully' };
+}
+
 const BlogServices = {
   createNewBlogIntoDb,
   getAllBlogIntoDb,
   updateBlogIntoDb,
+  deleteBlogIntoDb,
+  deleteAllBlogIntoDb
 };
 
 export default BlogServices;

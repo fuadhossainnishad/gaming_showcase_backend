@@ -8,7 +8,7 @@ const validationRequest = (schema: AnyZodObject) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     try {
       console.log('validationRequest - Raw Body:', req.body);
-      console.log('validationRequest - Raw Body Type:', typeof req.body.data);
+      console.log('validationRequest - Raw Body Type:', req.body.data);
 
       // Parse JSON string in req.body.data if it exists
       if (!req.body.data) {
@@ -28,9 +28,12 @@ const validationRequest = (schema: AnyZodObject) => {
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
         const imagePaths = files['image']?.map(file => file.path) || [];
         const thumbnailPath = files['thumbnail']?.[0]?.path || '';
+        const blogPath = files['blogImage']?.[0]?.path || '';
+
         req.body.image = {
           images: imagePaths,
           thumbnail: thumbnailPath,
+          blogImage: blogPath,
         };
         console.log('validationRequest - Image Data:', req.body.image);
       }

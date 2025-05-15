@@ -50,10 +50,42 @@ const updateBlog: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   });
 });
 
+const deleteBlog: RequestHandler = catchAsync(async (req, res) => {
+  console.log('BlogController.createNewGame - Inputs:', {
+    body: req.body.data,
+    headers: req.headers,
+  });
+
+  const result = await BlogServices.deleteBlogIntoDb(req.body.data?.blogId!)
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Blog deleted perfectly',
+    data: result,
+  });
+})
+
+const deleteAllBlog: RequestHandler = catchAsync(async (req, res) => {
+  console.log('BlogController.createNewGame - Inputs:', {
+    body: req.body.data,
+    headers: req.headers,
+  });
+
+  const result = await BlogServices.deleteAllBlogIntoDb()
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'All blogs deleted perfectly',
+    data: result,
+  });
+})
+
 const BlogController = {
   createNewBlog,
   getAllBlog,
   updateBlog,
+  deleteBlog,
+  deleteAllBlog
 };
 
 export default BlogController;

@@ -67,10 +67,10 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   const thumbnailFile = files['thumbnail'] ? files['thumbnail'][0] : null;
 
   const mediaFiles = imageFiles.map((file) =>
-    MediaUrl.gameMediaUrl(file.path, userId),
+    MediaUrl.gameMediaUrl(file.path, userId, 'image'),
   );
   const thumbnail = thumbnailFile
-    ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId)
+    ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId, 'thumbnails')
     : image?.thumbnail || '';
 
   const user = await User.findById(userIdObject).where({
@@ -85,12 +85,12 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
     userId: userIdObject,
     userName: data.userName || 'Unknown',
     title: data.title,
-    // subTitle: data.subTitle || '',
+    subTitle: data.subTitle || '',
     description: data.description || '',
     image: mediaFiles.length > 0 ? mediaFiles : image?.images || [],
     thumbnail: thumbnail,
     categories: data.categories,
-    // platform: data.platform || [],
+    platform: data.platform || [],
     price: data.price ? parseFloat(data.price) : 0,
     socialLinks: data.socialLinks || [],
     gameStatus: data.gameStatus,
@@ -753,10 +753,10 @@ const updateGameIntoDb = async (
   const thumbnailFile = files?.['thumbnail'] ? files['thumbnail'][0] : null;
 
   const mediaFiles = imageFiles.map((file) =>
-    MediaUrl.gameMediaUrl(file.path, userId),
+    MediaUrl.gameMediaUrl(file.path, userId, 'image'),
   );
   const thumbnail = thumbnailFile
-    ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId)
+    ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId, 'thumbnails')
     : image?.thumbnail || '';
 
   const pendingUpdateData: Partial<IPendingGameUpdate> = {

@@ -4,29 +4,29 @@ import fs from 'fs';
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 
-const profileStorage = multer.diskStorage({
+const blogStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
     console.log('req.body:', req.body);
 
     const uploadDir = path.join(process.cwd(), `src/uploads/blog/`);
-    console.log('Profile Multer - Attempting to create directory:', uploadDir);
+    console.log('Blog Multer - Attempting to create directory:', uploadDir);
 
     try {
       fs.mkdirSync(uploadDir, { recursive: true });
       console.log(
-        'Profile Multer - Directory created successfully:',
+        'Blog Multer - Directory created successfully:',
         uploadDir,
       );
       cb(null, uploadDir);
     } catch (error: any) {
       console.error(
-        'Profile Multer - Failed to create directory:',
+        'Blog Multer - Failed to create directory:',
         error.message,
       );
       cb(
         new AppError(
           httpStatus.INTERNAL_SERVER_ERROR,
-          `Failed to create profile upload directory: ${error.message}`,
+          `Failed to create blog upload directory: ${error.message}`,
           '',
         ),
         '',
@@ -40,8 +40,8 @@ const profileStorage = multer.diskStorage({
   },
 });
 
-export const uploadProfile = multer({
-  storage: profileStorage,
+export const uploadBlog = multer({
+  storage: blogStorage,
   // fileFilter(req, file, cb: multer.FileFilterCallback) {
   //   const fileTypes = /jpeg|jpg|png/;
   //   const fileExt = fileTypes.test(path.extname(file.originalname).toLowerCase());

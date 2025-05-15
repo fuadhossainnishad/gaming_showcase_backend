@@ -34,7 +34,7 @@ router.post(
   '/comment',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   validationRequest(GameValidationSchema.CommentSchema),
-  GameController.addCommentUpvote,
+  GameController.addComment,
 );
 
 router.post(
