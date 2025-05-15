@@ -1,19 +1,8 @@
 import mongoose, { Schema } from 'mongoose';
-import {
-  CommentsInterface,
-  CreateGameModel,
-  GameInterface,
-  ShareInterface,
-} from './blog.interface';
-import { gameCategory } from './blog.constant';
+import { BlogInterface } from './blog.interface';
 
-const GameSchema = new Schema<GameInterface, CreateGameModel>(
+const BlogSchema = new Schema<BlogInterface>(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
     author: {
       type: String,
       required: true,
@@ -22,98 +11,19 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
       type: String,
       required: true,
     },
-    subTitle: {
-      type: String,
-      required: false,
-    },
     description: {
       type: String,
       required: true,
     },
-    image: {
-      type: [String],
-      required: true,
-    },
-    thumbnail: {
+    blogImage: {
       type: String,
-      required: false,
-    },
-    categories: {
-      type: [String],
       required: true,
     },
-    platform: {
-      type: [String],
-      required: false,
-    },
-    price: {
-      type: Number,
-      required: true,
-    },
-    socialLinks: {
-      type: [
-        {
-          name: { type: String, required: true },
-          link: { type: String, required: true },
-        },
-      ],
-      required: false,
-    },
-    gameStatus: {
-      type: String,
-      enum: ['active', 'upcoming'],
-      default: 'active',
-    },
-    upcomingDate: {
+    updatedAt: {
       type: Date,
-      validate: {
-        validator: function (this: GameInterface) {
-          return this.gameStatus === 'upcoming' ? !!this.upcomingDate : true;
-        },
-        message: 'Upcoming date is required when gameStatus is upcoming',
-      },
+      default: new Date(),
     },
-    comments: {
-      type: [
-        {
-          userId: {
-            type: String,
-            ref: 'User',
-            required: true,
-          },
-          comment: {
-            type: String,
-            required: true,
-          },
-        },
-      ],
-      default: [],
-    },
-    totalComments: {
-      type: Number,
-      default: 0,
-    },
-    shares: {
-      type: [
-        {
-          userId: {
-            type: String,
-            ref: 'User',
-            required: true,
-          },
-        },
-      ],
-      default: [],
-    },
-    totalShare: {
-      type: Number,
-      default: 0,
-    },
-    isApproved: {
-      type: Boolean,
-      default: false,
-    },
-    isDelete: {
+    isDeleted: {
       type: Boolean,
       default: false,
     },
@@ -123,59 +33,16 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
   },
 );
 
-GameSchema.set('toJSON', {
+BlogSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
   transform: (_doc, ret) => {
-    ret.gameId = ret._id.toString();
+    ret.blogId = ret._id.toString();
     delete ret._id;
-    ret.userId = ret.userId.toString();
-    ret.comments = ret.comments.map((comment: CommentsInterface) => ({
-      ...comment,
-      userId: comment.userId.toString(),
-    }));
-    ret.shares = ret.shares.map((share: ShareInterface) => ({
-      ...share,
-      userId: share.userId.toString(),
-    }));
     return ret;
   },
 });
 
-// Middleware
-GameSchema.pre('find', function (next) {
-  this.where({ isDelete: { $ne: true } });
-  next();
-});
-GameSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { isDelete: { $ne: true } } });
-  next();
-});
-GameSchema.pre('findOne', function (next) {
-  this.find({ isDelete: { $ne: true } });
-  next();
-});
+const Blog = mongoose.model<BlogInterface>('Blogs', BlogSchema);
 
-GameSchema.pre('save', function (next) {
-  if (!this.id) {
-    this.id = this._id.toString();
-  }
-  next();
-});
-
-GameSchema.statics.isExistGame = async function (
-  id: string,
-): Promise<GameInterface> {
-  const game = await this.findById(id);
-  if (!game) {
-    throw new Error('Game not found');
-  }
-  return game;
-};
-
-const games = mongoose.model<GameInterface, CreateGameModel>(
-  'Games',
-  GameSchema,
-);
-
-export default games;
+export default Blog;
