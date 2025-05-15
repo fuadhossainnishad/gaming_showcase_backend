@@ -35,13 +35,21 @@ const getAllBlog: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const updateBlog: RequestHandlerWithFiles = catchAsync(async (req, res) => {
-  console.log('GameController.createNewGame - Inputs:', {
+  console.log('BlogController.createNewGame - Inputs:', {
     body: req.body.data,
-    file: req.file,
+    file: req.files,
     headers: req.headers,
   });
 
-  const result = await BlogServices.updateBlogIntoDb(req.body.data, req.file);
+  const files = req.files as
+    | { [fieldname: string]: Express.Multer.File[] }
+    | undefined;
+
+  const blogImageFile = files?.blogImage ? files.blogImage[0] : undefined;
+  const result = await BlogServices.updateBlogIntoDb(
+    req.body.data,
+    blogImageFile,
+  );
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -56,14 +64,14 @@ const deleteBlog: RequestHandler = catchAsync(async (req, res) => {
     headers: req.headers,
   });
 
-  const result = await BlogServices.deleteBlogIntoDb(req.body.data?.blogId!)
+  const result = await BlogServices.deleteBlogIntoDb(req.body.data?.blogId!);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'Blog deleted perfectly',
     data: result,
   });
-})
+});
 
 const deleteAllBlog: RequestHandler = catchAsync(async (req, res) => {
   console.log('BlogController.createNewGame - Inputs:', {
@@ -71,21 +79,21 @@ const deleteAllBlog: RequestHandler = catchAsync(async (req, res) => {
     headers: req.headers,
   });
 
-  const result = await BlogServices.deleteAllBlogIntoDb()
+  const result = await BlogServices.deleteAllBlogIntoDb();
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'All blogs deleted perfectly',
     data: result,
   });
-})
+});
 
 const BlogController = {
   createNewBlog,
   getAllBlog,
   updateBlog,
   deleteBlog,
-  deleteAllBlog
+  deleteAllBlog,
 };
 
 export default BlogController;

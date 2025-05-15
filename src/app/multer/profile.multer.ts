@@ -6,7 +6,7 @@ import AppError from '../../app/error/AppError';
 
 const profileStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const userId = req.user?.id;
+    const userId = req.user?._id;
     console.log(
       'Profile Multer - userId:',
       userId,

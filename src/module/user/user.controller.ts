@@ -11,13 +11,13 @@ import AuthServices from '../auth/auth.services';
 const createUser: RequestHandler = catchAsync(async (req, res) => {
   // console.log("login req: ",req.body);
   const { user, existed } = await UserServices.createUserIntoDb(req.body.data);
-    const loginResult = await AuthServices.loginUserIntoDb({
+  const loginResult = await AuthServices.loginUserIntoDb({
     sub: user.sub,
-    name:user.name!,
+    name: user.name!,
     email: user.email,
-    password: req.body.data.password, 
+    password: req.body.data.password,
   });
-sendResponse(res, {
+  sendResponse(res, {
     success: true,
     statusCode: existed ? httpStatus.OK : httpStatus.CREATED,
     message: existed
@@ -38,7 +38,7 @@ const findAllUser: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const userProfile: RequestHandler = catchAsync(async (req, res) => {
-  console.log("userId", typeof req.user?._id);
+  console.log('userId', typeof req.user?._id);
   const result = await UserServices.userProfile(req.user?._id!);
   sendResponse(res, {
     success: true,
@@ -53,18 +53,22 @@ const updateProfileUser: RequestHandler = catchAsync(async (req, res) => {
     throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated', '');
   }
   // console.log(req.body);
-  console.log("userId", req.user?.id);
+  console.log('userId', req.user?.id);
 
   // const payload: IUserUpdate = {
   //   name: req.body.name,
   //   bio: req.body.bio,
   //   links,
   // };
+  const files = req.files as
+    | { [fieldname: string]: Express.Multer.File[] }
+    | undefined;
 
+  const photoImageFile = files?.photo ? files.photo[0] : undefined;
   const result = await UserServices.updateUserProfileIntoDb(
     req.user?._id!,
     req.body.data,
-    req.file,
+    photoImageFile,
   );
   sendResponse(res, {
     success: true,
@@ -88,7 +92,10 @@ const submitProfileUpdate: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const deleteUserProfile: RequestHandler = catchAsync(async (req, res) => {
-  const result = await UserServices.deleteUserIntoDb(req.body.data.userId, req.user?._id!);
+  const result = await UserServices.deleteUserIntoDb(
+    req.body.data.userId,
+    req.user?._id!,
+  );
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

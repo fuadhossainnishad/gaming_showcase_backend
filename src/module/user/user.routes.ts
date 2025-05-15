@@ -22,7 +22,7 @@ router.get('/user-profile', auth(USER_ROLE.USER), UserController.userProfile);
 router.patch(
   '/update_profile',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
-  uploadProfile.single('photo'),
+  uploadProfile.fields([{ name: 'photo', maxCount: 1 }]),
   validationRequest(userValidation.userProfileUpdateValidation),
   UserController.updateProfileUser,
 );

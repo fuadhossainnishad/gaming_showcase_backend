@@ -30,7 +30,7 @@ const createUserIntoDb = async (payload: TSignup) => {
       isDeleted: { $ne: true },
     });
     if (isExist) {
-      return { user:isExist, existed: true };
+      return { user: isExist, existed: true };
     }
 
     const createUserBuilder = new User({
@@ -44,8 +44,7 @@ const createUserIntoDb = async (payload: TSignup) => {
     console.log(createUserBuilder);
     const result = await createUserBuilder.save();
 
-    return { user:result, existed: false };
-
+    return { user: result, existed: false };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
@@ -194,7 +193,9 @@ const updateUserProfileIntoDb = async (
       );
     }
 
-    if (existingUser.id !== userId) {
+    console.log('existingUser.id: ', typeof existingUser.id);
+
+    if (existingUser.id !== userId.toString()) {
       throw new AppError(
         httpStatus.FORBIDDEN,
         'You can only update your own profile',
@@ -203,7 +204,7 @@ const updateUserProfileIntoDb = async (
     }
 
     const photoPath = file
-      ? MediaUrl.profileMediaUrl(file.path, userId)
+      ? MediaUrl.profileMediaUrl(file.path, userId.toString())
       : existingUser.photo;
     console.log('photoPath:', photoPath);
 

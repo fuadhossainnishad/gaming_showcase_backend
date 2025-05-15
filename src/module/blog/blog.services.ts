@@ -120,9 +120,7 @@ const updateBlogIntoDb = async (
     if (payload.author) updateFields.author = payload.author;
 
     if (file) {
-      updateFields.blogImage = MediaUrl.blogMediaUrl(
-        file.path,
-      );
+      updateFields.blogImage = MediaUrl.blogMediaUrl(file.path);
     }
 
     updateFields.updatedAt = new Date();
@@ -150,39 +148,49 @@ const updateBlogIntoDb = async (
 
 const deleteBlogIntoDb = async (blogId: string) => {
   if (!blogId) {
-    throw new AppError(httpStatus.NOT_FOUND, 'BlogId is required', '')
+    throw new AppError(httpStatus.NOT_FOUND, 'BlogId is required', '');
   }
-  const blogIdObject = await idConverter(blogId)
-  const isExist = Blog.findById(blogIdObject)
+  const blogIdObject = await idConverter(blogId);
+  const isExist = Blog.findById(blogIdObject);
   if (!isExist) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Blog not exist in database', '')
+    throw new AppError(httpStatus.NOT_FOUND, 'Blog not exist in database', '');
   }
-  const deleteBlog = await Blog.deleteOne({ _id: blogIdObject, isDeleted: { $ne: true } })
+  const deleteBlog = await Blog.deleteOne({
+    _id: blogIdObject,
+    isDeleted: { $ne: true },
+  });
   if (deleteBlog.deletedCount === 0) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Blog not deleted yet from database', '')
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Blog not deleted yet from database',
+      '',
+    );
   }
   return { success: true, message: 'Blog deleted successfully' };
-}
+};
 
 const deleteAllBlogIntoDb = async () => {
-
-  const blogs = await Blog.find()
+  const blogs = await Blog.find();
   if (!blogs || blogs.length === 0) {
-    throw new AppError(httpStatus.NOT_FOUND, 'No blog exist in database', '')
+    throw new AppError(httpStatus.NOT_FOUND, 'No blog exist in database', '');
   }
-  const deleteBlog = await Blog.deleteMany({ isDeleted: { $ne: true } })
+  const deleteBlog = await Blog.deleteMany({ isDeleted: { $ne: true } });
   if (deleteBlog.deletedCount === 0) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Blog not deleted yet from database', '')
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Blog not deleted yet from database',
+      '',
+    );
   }
   return { success: true, message: 'All blog deleted successfully' };
-}
+};
 
 const BlogServices = {
   createNewBlogIntoDb,
   getAllBlogIntoDb,
   updateBlogIntoDb,
   deleteBlogIntoDb,
-  deleteAllBlogIntoDb
+  deleteAllBlogIntoDb,
 };
 
 export default BlogServices;

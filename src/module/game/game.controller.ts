@@ -89,7 +89,6 @@ const getAllApproveGame: RequestHandler = catchAsync(async (req, res) => {
 
   const result = await GameServices.getAllApproveGameIntoDb(req.query, true);
 
-
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

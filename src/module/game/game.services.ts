@@ -12,7 +12,6 @@ import {
   TopGameQuery,
 } from './game.type';
 import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
-import { USER_ROLE, UserRole } from '../user/user.constant';
 import PendingGameUpdate from './gameUpdate.model';
 import { GameInterface, IPendingGameUpdate, Upvote } from './game.interface';
 import mongoose from 'mongoose';
@@ -138,7 +137,7 @@ const getAllGameIntoDb = async (
     // if (!Object.values(USER_ROLE).includes(role)) {
     //   throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
     // }
-    const baseQuery = Game.find();
+    const baseQuery = Game.find().populate('userId');
     if (isApproved === true) {
       baseQuery.where({ isApproved: isApproved });
     }
@@ -211,7 +210,10 @@ const getUpcomingGame = async (
     //   throw new AppError(httpStatus.FORBIDDEN, 'Invalid user role', '');
     // }
 
-    const filter: Record<string, any> = { gameStatus: 'upcoming', isApproved: true };
+    const filter: Record<string, any> = {
+      gameStatus: 'upcoming',
+      isApproved: true,
+    };
     // if (role !== USER_ROLE.ADMIN) {
     //   filter.isApproved = true;
     // }
