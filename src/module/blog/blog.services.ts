@@ -7,6 +7,8 @@ import Blog from './blog.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
 import mongoose from 'mongoose';
 import { idConverter } from '../../utility/idCoverter';
+import { uploadFileToBunny } from '../../utility/bunny_cdn';
+import fs from 'fs';
 
 const createNewBlogIntoDb = async (req: RequestWithFiles) => {
   console.log('createNewGameIntoDb - Request Details:', {
@@ -30,10 +32,23 @@ const createNewBlogIntoDb = async (req: RequestWithFiles) => {
   }
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
   const blogImageFiles = files?.blogImage || [];
+
   const blogImage =
     blogImageFiles.length > 0
       ? MediaUrl.blogMediaUrl(blogImageFiles[0].path)
       : '';
+
+  // let blogImage;
+  // if (blogImageFiles.length > 0) {
+  //   const remotePath = `${Date.now()}-${blogImageFiles[0].originalname}`;
+
+  //   blogImage = await uploadFileToBunny(blogImageFiles[0].path, remotePath);
+
+  //   fs.unlinkSync(blogImageFiles[0].path);
+  // } else {
+  //   blogImage = '';
+  // }
+
   const blogData: BlogInterface = {
     author: data.author || 'Unknown',
     title: data.title,
