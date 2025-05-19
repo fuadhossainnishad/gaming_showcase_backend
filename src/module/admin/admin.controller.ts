@@ -65,7 +65,7 @@ const approveGameUpdateByAdmin: RequestHandler = catchAsync(
   async (req, res) => {
     const result = await AdminServices.approveGameUpdate(
       req.body.data,
-      req.user?._id!,
+      // req.user?._id!,
     );
     sendResponse(res, {
       success: true,

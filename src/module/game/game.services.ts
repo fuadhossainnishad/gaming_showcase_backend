@@ -18,6 +18,8 @@ import mongoose from 'mongoose';
 import MediaUrl from '../../utility/game.media';
 import { idConverter } from '../../utility/idCoverter';
 import Game from './game.model';
+import { uploadFileToBunny } from '../../utility/bunny_cdn';
+import fs from 'fs';
 
 const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   console.log('createNewGameIntoDb - Request Details:', {
@@ -65,12 +67,26 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   const imageFiles = files['image'] || [];
   const thumbnailFile = files['thumbnail'] ? files['thumbnail'][0] : null;
 
-  const mediaFiles = imageFiles.map((file) =>
-    MediaUrl.gameMediaUrl(file.path, userId, 'image'),
-  );
-  const thumbnail = thumbnailFile
-    ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId, 'thumbnails')
-    : image?.thumbnail || '';
+  // const mediaFiles = imageFiles.map((file) =>
+  //   MediaUrl.gameMediaUrl(file.path, userId, 'image'),
+  // );
+
+  const mediaFiles = await Promise.all(imageFiles.map(async (file) => {
+    const remotePath = `${Date.now()}-${file.originalname}`
+    return await uploadFileToBunny(file.path, remotePath)
+  }
+  ));
+
+  // const thumbnail = thumbnailFile
+  //   ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId, 'thumbnails')
+  //   : image?.thumbnail || '';
+
+  let thumbnail
+  if (thumbnailFile) {
+    const remotePath = `${Date.now()}-${thumbnailFile.originalname}`
+    thumbnail = await uploadFileToBunny(thumbnailFile.path, remotePath)
+    fs.unlinkSync(thumbnailFile.path)
+  }
 
   const user = await User.findById(userIdObject).where({
     isDeleted: { $ne: true },
@@ -87,7 +103,7 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
     subTitle: data.subTitle || '',
     description: data.description || '',
     image: mediaFiles.length > 0 ? mediaFiles : image?.images || [],
-    thumbnail: thumbnail,
+    thumbnail: thumbnail!,
     categories: data.categories,
     platform: data.platform || [],
     price: data.price ? parseFloat(data.price) : 0,
@@ -726,11 +742,11 @@ const updateGameIntoDb = async (
       '',
     );
   }
-  console.log('userId type: ', dataUserId);
+  console.log('userId type: ', userId);
 
   console.log('userId type: ', game.userId);
 
-  if (game.userId.toString() !== userId) {
+  if (game.userId.toString() !== userId.toString()) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'You can only update your own games',
@@ -754,12 +770,26 @@ const updateGameIntoDb = async (
   const imageFiles = files?.['image'] || [];
   const thumbnailFile = files?.['thumbnail'] ? files['thumbnail'][0] : null;
 
-  const mediaFiles = imageFiles.map((file) =>
-    MediaUrl.gameMediaUrl(file.path, userId, 'image'),
-  );
-  const thumbnail = thumbnailFile
-    ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId, 'thumbnails')
-    : image?.thumbnail || '';
+  // const mediaFiles = imageFiles.map((file) =>
+  //   MediaUrl.gameMediaUrl(file.path, userId, 'image'),
+  // );
+
+  const mediaFiles = await Promise.all(imageFiles.map(async (file) => {
+    const remotePath = `${Date.now()}-${file.originalname}`
+    return await uploadFileToBunny(file.path, remotePath)
+  }
+  ));
+
+  // const thumbnail = thumbnailFile
+  //   ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId, 'thumbnails')
+  //   : image?.thumbnail || '';
+
+  let thumbnail
+  if (thumbnailFile) {
+    const remotePath = `${Date.now()}-${thumbnailFile.originalname}`
+    thumbnail = await uploadFileToBunny(thumbnailFile.path, remotePath)
+    fs.unlinkSync(thumbnailFile.path)
+  }
 
   const pendingUpdateData: Partial<IPendingGameUpdate> = {
     gameId: dataGameId,

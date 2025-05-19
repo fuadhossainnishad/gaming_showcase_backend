@@ -33,21 +33,21 @@ const createNewBlogIntoDb = async (req: RequestWithFiles) => {
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
   const blogImageFiles = files?.blogImage || [];
 
-  const blogImage =
-    blogImageFiles.length > 0
-      ? MediaUrl.blogMediaUrl(blogImageFiles[0].path)
-      : '';
+  // const blogImage =
+  //   blogImageFiles.length > 0
+  //     ? MediaUrl.blogMediaUrl(blogImageFiles[0].path)
+  //     : '';
 
-  // let blogImage;
-  // if (blogImageFiles.length > 0) {
-  //   const remotePath = `${Date.now()}-${blogImageFiles[0].originalname}`;
+  let blogImage;
+  if (blogImageFiles.length > 0) {
+    const remotePath = `${Date.now()}-${blogImageFiles[0].originalname}`;
 
-  //   blogImage = await uploadFileToBunny(blogImageFiles[0].path, remotePath);
+    blogImage = await uploadFileToBunny(blogImageFiles[0].path, remotePath);
 
-  //   fs.unlinkSync(blogImageFiles[0].path);
-  // } else {
-  //   blogImage = '';
-  // }
+    fs.unlinkSync(blogImageFiles[0].path);
+  } else {
+    blogImage = '';
+  }
 
   const blogData: BlogInterface = {
     author: data.author || 'Unknown',
@@ -134,9 +134,16 @@ const updateBlogIntoDb = async (
     if (payload.description) updateFields.description = payload.description;
     if (payload.author) updateFields.author = payload.author;
 
+    // if (file) {
+    //   updateFields.blogImage = MediaUrl.blogMediaUrl(file.path);
+    // }
+
     if (file) {
-      updateFields.blogImage = MediaUrl.blogMediaUrl(file.path);
+      const remotePath = `${Date.now()}-${file.originalname}`
+      updateFields.blogImage = await uploadFileToBunny(file.path, remotePath);
+      fs.unlinkSync(file.path)
     }
+
 
     updateFields.updatedAt = new Date();
 

@@ -130,7 +130,7 @@ const getPendingGameUpdates = async () => {
 
 const approveGameUpdate = async (
   payload: TApproveGameUpdate,
-  adminId: string,
+  // adminId: string,
 ) => {
   try {
     if (!payload.updateId) {
@@ -151,9 +151,9 @@ const approveGameUpdate = async (
       isDeleted: { $ne: true },
       role: USER_ROLE.ADMIN,
     });
-    if (!admin) {
-      throw new AppError(httpStatus.FORBIDDEN, 'Admin user not found', '');
-    }
+    // if (!admin) {
+    //   throw new AppError(httpStatus.FORBIDDEN, 'Admin user not found', '');
+    // }
 
     const pendingUpdate = await PendingGameUpdate.findById(updateIdObject);
     if (!pendingUpdate) {
@@ -195,17 +195,17 @@ const approveGameUpdate = async (
       updateFields.subTitle = pendingUpdate.subTitle;
     if (pendingUpdate.description !== undefined)
       updateFields.description = pendingUpdate.description;
-    if (pendingUpdate.image !== undefined)
+    if (pendingUpdate.image !== undefined && pendingUpdate.image.length > 0)
       updateFields.image = pendingUpdate.image;
-    if (pendingUpdate.thumbnail !== undefined)
+    if (pendingUpdate.thumbnail !== undefined && pendingUpdate.thumbnail !== '')
       updateFields.thumbnail = pendingUpdate.thumbnail;
     if (pendingUpdate.categories !== undefined)
       updateFields.categories = pendingUpdate.categories;
-    if (pendingUpdate.platform !== undefined)
+    if (pendingUpdate.platform !== undefined && pendingUpdate.platform.length > 0)
       updateFields.platform = pendingUpdate.platform;
     if (pendingUpdate.price !== undefined)
       updateFields.price = pendingUpdate.price;
-    if (pendingUpdate.socialLinks !== undefined)
+    if (pendingUpdate.socialLinks !== undefined && pendingUpdate.socialLinks.length > 0)
       updateFields.socialLinks = pendingUpdate.socialLinks;
     if (pendingUpdate.gameStatus !== undefined)
       updateFields.gameStatus = pendingUpdate.gameStatus;
@@ -242,7 +242,7 @@ const approveGameUpdate = async (
 
     await PendingGameUpdate.findByIdAndUpdate(updateIdObject, {
       status: 'approved',
-      reviewedBy: await idConverter(adminId),
+      // reviewedBy: await idConverter(adminId),
       reviewedAt: new Date(),
     });
 

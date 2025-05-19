@@ -18,6 +18,8 @@ import { idConverter } from '../../utility/idCoverter';
 import { SocialLinksInterface } from '../game/game.interface';
 import AuthServices from '../auth/auth.services';
 import AuthController from '../auth/auth.controller';
+import { uploadFileToBunny } from '../../utility/bunny_cdn';
+import fs from 'fs';
 
 const createUserIntoDb = async (payload: TSignup) => {
   try {
@@ -203,9 +205,18 @@ const updateUserProfileIntoDb = async (
       );
     }
 
-    const photoPath = file
-      ? MediaUrl.profileMediaUrl(file.path, userId.toString())
-      : existingUser.photo;
+    // const photoPath = file
+    //   ? MediaUrl.profileMediaUrl(file.path, userId.toString())
+    //   : existingUser.photo;
+
+    let photoPath
+    if (file) {
+      const remotePath = `${Date.now()}-${file.originalname}`
+      photoPath = await uploadFileToBunny(file.path, remotePath)
+      fs.unlinkSync(file.path)
+    } else {
+      photoPath = existingUser.photo
+    }
     console.log('photoPath:', photoPath);
 
     const pendingUserUpdateData: Partial<IPendingUserUpdate> = {
