@@ -24,7 +24,7 @@ router.post(
   AdminController.loginAdmin,
 );
 
-router.get('/getAllGame', GameController.getAllGame);
+router.get('/getAllGame', GameController.getAllGamebyAdmin);
 
 router.get('/find_all_users', UserController.findAllUser);
 

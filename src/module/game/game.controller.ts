@@ -46,21 +46,20 @@ const createNewGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
 });
 
 const getAllGame: RequestHandler = catchAsync(async (req, res) => {
-  // if (!req.user) {
-  //   throw new AppError(
-  //     httpStatus.UNAUTHORIZED,
-  //     'Accessor is not authenticated',
-  //     '',
-  //   );
-  // }
 
-  let result;
+  const result = await GameServices.getAllGameIntoDb(req.query, true);
 
-  if (req.user?.role === USER_ROLE.ADMIN) {
-    result = await GameServices.getAllGameIntoDb(req.query, false);
-  } else {
-    result = await GameServices.getAllGameIntoDb(req.query, true);
-  }
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully retrieved all games',
+    data: result,
+  });
+});
+
+const getAllGamebyAdmin: RequestHandler = catchAsync(async (req, res) => {
+
+  const result = await GameServices.getAllGameIntoDb(req.query, false);
 
   sendResponse(res, {
     success: true,
@@ -128,7 +127,7 @@ const getSimilarGame: RequestHandler = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'Successfully retrieved upcoming games',
+    message: 'Successfully retrieved similar games',
     data: result,
   });
 });
@@ -250,6 +249,7 @@ const searchGame: RequestHandler = catchAsync(async (req, res) => {
 const GameController = {
   createNewGame,
   getAllGame,
+  getAllGamebyAdmin,
   getAllApproveGame,
   getUpcomingGame,
   getSimilarGame,
