@@ -20,6 +20,7 @@ import AuthServices from '../auth/auth.services';
 import AuthController from '../auth/auth.controller';
 import { uploadFileToBunny } from '../../utility/bunny_cdn';
 import fs from 'fs';
+import Game from '../game/game.model';
 
 const createUserIntoDb = async (payload: TSignup) => {
   try {
@@ -136,12 +137,47 @@ const deleteUserIntoDb = async (userId: string, authUserId: string) => {
 
   await User.deleteOne({ _id: userIdObject });
 
-  const userdeletd = await User.findById(userIdObject);
+  const userDeleted = await User.findById(userIdObject);
 
-  if (userdeletd) {
+  if (userDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not deleted', '');
   }
   return { message: 'User account deleted' };
+};
+
+const deleteGameIntoDb = async (gameId: string, authUserId: string) => {
+  if (!authUserId) {
+    throw new AppError(httpStatus.NO_CONTENT, 'Invalid user access', '');
+  }
+
+  if (!gameId) {
+    throw new AppError(httpStatus.NO_CONTENT, 'Invalid gameId', '');
+  }
+
+  const gameIdObject = await idConverter(gameId);
+
+  const gameExist = await Game.findById(gameIdObject);
+
+  if (!gameExist) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Game not found', '');
+  }
+
+  if (authUserId.toString() !== gameExist.userId.toString()) {
+    throw new AppError(
+      httpStatus.NO_CONTENT,
+      'Only owner can delete own game',
+      '',
+    );
+  }
+
+  const deleteResult = await Game.deleteOne({ _id: gameIdObject });
+  console.log('Delete result:', deleteResult);
+
+  if (deleteResult.deletedCount === 0) {
+    throw new Error('Game deletion failed.');
+  }
+
+  return { success: true, message: 'Game deleted successfully' };
 };
 
 const updateUserProfileIntoDb = async (
@@ -209,13 +245,13 @@ const updateUserProfileIntoDb = async (
     //   ? MediaUrl.profileMediaUrl(file.path, userId.toString())
     //   : existingUser.photo;
 
-    let photoPath
+    let photoPath;
     if (file) {
-      const remotePath = `${Date.now()}-${file.originalname}`
-      photoPath = await uploadFileToBunny(file.path, remotePath)
-      fs.unlinkSync(file.path)
+      const remotePath = `${Date.now()}-${file.originalname}`;
+      photoPath = await uploadFileToBunny(file.path, remotePath);
+      fs.unlinkSync(file.path);
     } else {
-      photoPath = existingUser.photo
+      photoPath = existingUser.photo;
     }
     console.log('photoPath:', photoPath);
 
@@ -288,6 +324,7 @@ const UserServices = {
   findAllUserIntoDb,
   userProfile,
   deleteUserIntoDb,
+  deleteGameIntoDb,
   updateUserProfileIntoDb,
   submitProfileUpdate,
 };

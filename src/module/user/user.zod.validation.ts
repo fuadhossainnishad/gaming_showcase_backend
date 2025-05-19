@@ -55,7 +55,15 @@ const userSignInValidation = z.object({
 const userDeleteValidation = z.object({
   body: z.object({
     data: z.object({
-      userId: z.string({ required_error: 'Email is required' }),
+      userId: z.string({ required_error: 'UserId is required' }),
+    }),
+  }),
+});
+
+const gameDeleteValidation = z.object({
+  body: z.object({
+    data: z.object({
+      gameId: z.string({ required_error: 'GameId is required' }),
     }),
   }),
 });
@@ -120,6 +128,7 @@ export const userValidation = {
   userSignUpValidation,
   userSignInValidation,
   userDeleteValidation,
+  gameDeleteValidation,
   userProfileUpdateValidation,
   approveUpdateValidation,
   rejectUpdateValidation,

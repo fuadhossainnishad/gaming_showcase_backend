@@ -86,7 +86,7 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
         },
         message: 'Upcoming date is required when gameStatus is upcoming',
       },
-      required: true,
+      required: false,
     },
     upvote: {
       type: [

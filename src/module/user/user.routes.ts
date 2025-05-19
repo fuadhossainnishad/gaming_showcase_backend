@@ -34,6 +34,13 @@ router.delete(
   UserController.deleteUserProfile,
 );
 
+router.delete(
+  '/delete-game',
+  auth(USER_ROLE.USER),
+  validationRequest(userValidation.gameDeleteValidation),
+  UserController.deleteGame,
+);
+
 // router.post(
 //   '/profile/update',
 //   verifyToken,

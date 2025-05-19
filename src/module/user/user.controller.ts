@@ -104,11 +104,25 @@ const deleteUserProfile: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const deleteGame: RequestHandler = catchAsync(async (req, res) => {
+  const result = await UserServices.deleteGameIntoDb(
+    req.body.data?.gameId,
+    req.user?._id!,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'successfully delete game',
+    data: result,
+  });
+});
+
 const UserController = {
   createUser,
   findAllUser,
   userProfile,
   deleteUserProfile,
+  deleteGame,
   updateProfileUser,
   submitProfileUpdate,
 };

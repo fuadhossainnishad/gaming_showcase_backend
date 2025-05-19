@@ -199,18 +199,38 @@ const approveGameUpdate = async (
       updateFields.image = pendingUpdate.image;
     if (pendingUpdate.thumbnail !== undefined && pendingUpdate.thumbnail !== '')
       updateFields.thumbnail = pendingUpdate.thumbnail;
-    if (pendingUpdate.categories !== undefined)
+    if (
+      pendingUpdate.categories !== undefined &&
+      pendingUpdate.categories.length > 0
+    )
       updateFields.categories = pendingUpdate.categories;
-    if (pendingUpdate.platform !== undefined && pendingUpdate.platform.length > 0)
+    if (
+      pendingUpdate.platform !== undefined &&
+      pendingUpdate.platform.length > 0
+    )
       updateFields.platform = pendingUpdate.platform;
     if (pendingUpdate.price !== undefined)
       updateFields.price = pendingUpdate.price;
-    if (pendingUpdate.socialLinks !== undefined && pendingUpdate.socialLinks.length > 0)
+    if (
+      pendingUpdate.socialLinks !== undefined &&
+      pendingUpdate.socialLinks.length > 0
+    )
       updateFields.socialLinks = pendingUpdate.socialLinks;
-    if (pendingUpdate.gameStatus !== undefined)
+    if (
+      pendingUpdate.gameStatus !== undefined &&
+      (pendingUpdate.gameStatus === 'upcoming' ||
+        pendingUpdate.gameStatus === 'active')
+    ) {
       updateFields.gameStatus = pendingUpdate.gameStatus;
-    if (pendingUpdate.upcomingDate !== undefined)
-      updateFields.upcomingDate = pendingUpdate.upcomingDate;
+      updateFields.upcomingDate = undefined;
+
+      if (
+        pendingUpdate.gameStatus === 'upcoming' &&
+        pendingUpdate.upcomingDate !== undefined
+      ) {
+        updateFields.upcomingDate = pendingUpdate.upcomingDate;
+      }
+    }
 
     if (Object.keys(updateFields).length === 0) {
       throw new AppError(
