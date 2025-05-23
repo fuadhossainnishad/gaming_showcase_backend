@@ -162,6 +162,22 @@ const addCommentUpvote: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const addGameUpvote: RequestHandler = catchAsync(async (req, res) => {
+  console.log('add game upvote: ', req.body);
+  // console.log(req.user);
+
+  const result = await GameServices.userGameUpvote(
+    req.body.data,
+    req.user?._id!,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Successfully upvoted this game',
+    data: result,
+  });
+});
 
 const addShare: RequestHandler = catchAsync(async (req, res) => {
   const result = await GameServices.userShare(req.body.data, req.user?._id!);
@@ -255,6 +271,7 @@ const GameController = {
   getSimilarGame,
   addComment,
   addCommentUpvote,
+  addGameUpvote,
   addShare,
   getTopGameOfDay,
   getTopGameOfWeek,

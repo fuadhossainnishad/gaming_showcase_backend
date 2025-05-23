@@ -65,6 +65,14 @@ const UpvoteCommentSchema = z.object({
   }),
 });
 
+const UpvoteGameSchema = z.object({
+  body: z.object({
+    data: z.object({
+      gameId: z.string({ required_error: 'Game ID is required' }),
+    }),
+  }),
+});
+
 const ShareSchema = z.object({
   body: z.object({
     data: z.object({
@@ -186,6 +194,7 @@ const GameValidationSchema = {
   GameSchema,
   CommentSchema,
   UpvoteCommentSchema,
+  UpvoteGameSchema,
   ShareSchema,
   TopGameQuerySchema,
   GameUpdateSchemaValidation,

@@ -8,6 +8,10 @@ export type CommentUpvotePayload = {
   commentId: string;
 };
 
+export type GameUpvotePayload = {
+  gameId: string;
+};
+
 export type SharePayload = {
   gameId: string;
 };

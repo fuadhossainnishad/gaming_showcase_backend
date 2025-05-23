@@ -45,6 +45,13 @@ router.post(
 );
 
 router.post(
+  '/upvote-game',
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER, USER_ROLE.SUPERADMIN),
+  validationRequest(GameValidationSchema.UpvoteGameSchema),
+  GameController.addGameUpvote,
+);
+
+router.post(
   '/share',
   auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   validationRequest(GameValidationSchema.ShareSchema),

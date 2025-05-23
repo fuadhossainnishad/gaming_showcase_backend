@@ -7,6 +7,7 @@ import User from '../user/user.model';
 import {
   CommentPayload,
   CommentUpvotePayload,
+  GameUpvotePayload,
   SharePayload,
   TGameUpdate,
   TopGameQuery,
@@ -470,6 +471,82 @@ const userCommentUpvote = async (
     );
   }
 };
+const userGameUpvote = async (
+  payload: GameUpvotePayload,
+  userId: string,
+) => {
+  try {
+    if (!payload.gameId) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Game ID are required',
+        '',
+      );
+    }
+
+    const userIdObject = await idConverter(userId)
+    const gameIdObject = await idConverter(payload.gameId)
+
+    const user = await User.findById(userIdObject).where({
+      isDeleted: { $ne: true },
+    });
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found', '');
+    }
+
+    const game = await Game.findById(gameIdObject).where({
+      isDelete: { $ne: true },
+    });
+    if (!game) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Game not found or is deleted',
+        '',
+      );
+    }
+
+    const alreadyUpvoted = game.upvote?.some((vote) =>
+      vote.userId.equals(userIdObject),
+    );
+    if (alreadyUpvoted) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'User has already upvoted this comment',
+        '',
+      );
+    }
+
+    const updatedGame = await Game.findOneAndUpdate(
+      {
+        _id: gameIdObject,
+        isDelete: { $ne: true },
+      },
+      {
+        $push: {
+          'upvote': {
+            userId: userIdObject,
+            createdAt: new Date(),
+          },
+        },
+        $inc: { 'totalUpvote': 1 },
+      },
+      { new: true, runValidators: true },
+    ).populate('userId');
+
+    if (!updatedGame) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Failed to upvote game', '');
+    }
+
+    return updatedGame;
+  } catch (error: any) {
+    console.error('Error in game tUpvote:', error);
+    throw new AppError(
+      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to upvote game',
+      '',
+    );
+  }
+};
 
 const userShare = async (payload: SharePayload, userId: string) => {
   try {
@@ -534,11 +611,10 @@ const userShare = async (payload: SharePayload, userId: string) => {
 
 export const getTopGameOfDay = async (query: TopGameQuery) => {
   try {
-    const { limit = 10 } = query;
     const start = startOfDay(new Date());
     const end = endOfDay(new Date());
 
-    const topGames = await games.aggregate([
+    const topGames = await Game.aggregate([
       {
         $match: {
           isDelete: { $ne: true },
@@ -599,7 +675,6 @@ export const getTopGameOfDay = async (query: TopGameQuery) => {
         },
       },
       { $sort: { popularityScore: -1 } },
-      { $limit: limit },
       {
         $lookup: {
           from: 'users',
@@ -610,7 +685,6 @@ export const getTopGameOfDay = async (query: TopGameQuery) => {
       },
       { $unwind: '$userId' },
     ]);
-
     return topGames;
   } catch (error: any) {
     throw new AppError(
@@ -623,7 +697,6 @@ export const getTopGameOfDay = async (query: TopGameQuery) => {
 
 export const getTopGameOfWeek = async (query: TopGameQuery) => {
   try {
-    const { limit = 10 } = query;
     const start = startOfWeek(new Date(), { weekStartsOn: 1 });
     const end = endOfWeek(new Date(), { weekStartsOn: 1 });
 
@@ -688,7 +761,7 @@ export const getTopGameOfWeek = async (query: TopGameQuery) => {
         },
       },
       { $sort: { popularityScore: -1 } },
-      { $limit: limit },
+      { $limit: query.limit! },
       {
         $lookup: {
           from: 'users',
@@ -841,6 +914,7 @@ const GameServices = {
   getSimilarGame,
   userComment,
   userCommentUpvote,
+  userGameUpvote,
   userShare,
   getTopGameOfDay,
   getTopGameOfWeek,
