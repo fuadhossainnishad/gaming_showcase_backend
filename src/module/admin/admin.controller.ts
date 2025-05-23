@@ -8,8 +8,22 @@ import AuthServices from '../auth/auth.services';
 import config from '../../app/config';
 import AppError from '../../app/error/AppError';
 
-const createAdmin: RequestHandler = catchAsync(async (req, res) => {
+const createSuperAdmin: RequestHandler = catchAsync(async (req, res) => {
   const result = await AdminServices.createAdminIntoDb(req.body.data);
+  // console.log(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: 'successfully create admin',
+    data: result,
+  });
+});
+const createAdmin: RequestHandler = catchAsync(async (req, res) => {
+  const adminId = req.user?.id;
+  if (!adminId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Admin not authenticated', '');
+  }
+  const result = await AdminServices.createAdminIntoDb(req.body.data, adminId);
   // console.log(req.body);
   sendResponse(res, {
     success: true,
@@ -147,6 +161,9 @@ const deleteUserByAdmin: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const deleteGameByAdmin: RequestHandler = catchAsync(async (req, res) => {
+  if (req.user?.role !== 'SUPERADMIN') {
+    throw new AppError(httpStatus.FORBIDDEN, 'Only Super Admin can delete blog', '');
+  }
   console.log(req.body.data?.gameId!);
   const result = await AdminServices.deleteGame(req.body.data?.gameId!);
   sendResponse(res, {
@@ -168,6 +185,7 @@ const getDashboardStats: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const AdminController = {
+  createSuperAdmin,
   createAdmin,
   loginAdmin,
   approveGameByAdmin,

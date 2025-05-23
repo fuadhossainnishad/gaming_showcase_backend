@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { BlogInterface } from './blog.interface';
+import { type } from 'os';
 
 const BlogSchema = new Schema<BlogInterface>(
   {
@@ -18,6 +19,21 @@ const BlogSchema = new Schema<BlogInterface>(
     blogImage: {
       type: String,
       required: true,
+    },
+    altTag: {
+      type: String,
+      required: true
+    },
+    rewards: {
+      type: [
+        {
+          code: { type: String, required: true },
+          reward: { type: String, required: true },
+          validity: { type: String, required: true }
+        }
+      ],
+      required: true,
+      default: []
     },
     updatedAt: {
       type: Date,

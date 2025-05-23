@@ -54,6 +54,8 @@ const createNewBlogIntoDb = async (req: RequestWithFiles) => {
     title: data.title,
     description: data.description || '',
     blogImage,
+    altTag: data.altTag || '',
+    rewards: data.rewards || [],
     updatedAt: new Date(),
     isDeleted: false,
   };
@@ -133,7 +135,8 @@ const updateBlogIntoDb = async (
     if (payload.title) updateFields.title = payload.title;
     if (payload.description) updateFields.description = payload.description;
     if (payload.author) updateFields.author = payload.author;
-
+    if (payload.altTag) updateFields.altTag = payload.altTag;
+    if (payload.rewards && payload.rewards.length > 0) updateFields.rewards = payload.rewards;
     // if (file) {
     //   updateFields.blogImage = MediaUrl.blogMediaUrl(file.path);
     // }

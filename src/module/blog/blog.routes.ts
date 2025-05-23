@@ -3,6 +3,8 @@ import BlogController from './blog.controller';
 import validationRequest from '../../middleware/validationRequest';
 import BlogValidationSchema from './blog.zod.validation';
 import { uploadBlog } from '../../app/multer/blog.multer';
+import auth from '../../middleware/auth';
+import { USER_ROLE } from '../user/user.constant';
 
 const router = express.Router();
 
@@ -24,6 +26,7 @@ router.patch(
 
 router.delete(
   '/delete-blog',
+  auth(USER_ROLE.SUPERADMIN),
   validationRequest(BlogValidationSchema.deleteBlogValidation),
   BlogController.deleteBlog,
 );

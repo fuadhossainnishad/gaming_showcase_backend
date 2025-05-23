@@ -1,4 +1,5 @@
 import { FilterQuery, Query, Model } from 'mongoose';
+import { number } from 'zod';
 
 
 class QueryBuilder<T> {
@@ -31,29 +32,35 @@ class QueryBuilder<T> {
   }
 
   sort() {
-    const sort = (this?.query?.sort as string)?.split(',').join(' '); 
+    const sort = (this?.query?.sort as string)?.split(',').join(' ');
     if (sort) {
       this.modelQuery = this.modelQuery.sort(sort);
     } else {
-      this.modelQuery = this.modelQuery.sort('-createdAt'); 
+      this.modelQuery = this.modelQuery.sort('-createdAt');
     }
     return this;
   }
 
   pagination() {
-    let limit = 10; 
     let page = 1;
     let skip = 0;
+    let limit: number | undefined = undefined;
 
     if (this?.query?.limit) {
       limit = Number(this.query?.limit);
+      if (limit < 0) limit = undefined;
     }
-    if (this?.query?.page) {
+    if (this?.query?.page && limit !== undefined && limit > 0) {
       page = Number(this?.query?.page);
+      if (page < 1) page = 1;
       skip = (page - 1) * limit;
+      this.modelQuery = this.modelQuery.skip(skip);
     }
 
-    this.modelQuery = this.modelQuery.skip(skip).limit(limit);
+    if (limit !== undefined && limit > 0) {
+      this.modelQuery = this.modelQuery.limit(limit);
+    }
+
     return this;
   }
 
@@ -70,9 +77,8 @@ class QueryBuilder<T> {
     const totalQueries = this.modelQuery.getFilter();
     const total = await this.modelQuery.model.countDocuments(totalQueries);
     const page = Number(this?.query?.page) || 1;
-    const limit = Number(this?.query?.limit) || 10;
-    const totalPage = Math.ceil(total / limit);
-
+    const limit = Number(this?.query?.limit) || undefined;
+    const totalPage = limit && limit > 0 ? Math.ceil(total / limit) : 1;
     return {
       page,
       limit,

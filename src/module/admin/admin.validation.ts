@@ -11,15 +11,14 @@ const adminSignUpValidation = z.object({
         .string({ required_error: 'Email is required' })
         .email()
         .regex(emailRegex, 'Invalid Email'),
-      // role: z.enum([USER_ROLE.ADMIN, USER_ROLE.USER]),
       password: z
         .string({ required_error: 'Password is required' })
         .min(8, 'minimum password length is 8')
         .regex(
           passwordRegex,
           'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-        )
-      ,
+        ),
+      role: z.enum(['SUPERADMIN', 'ADMIN'], { required_error: 'Choose beteween SuperAdmin or Admin' })
     }),
   }),
 });

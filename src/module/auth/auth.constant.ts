@@ -1,5 +1,9 @@
 import { Types } from 'mongoose';
 
+export type TAdminLogin = {
+  email: string,
+  password: string
+}
 export type TAuth = {
   sub: string;
   email: string;

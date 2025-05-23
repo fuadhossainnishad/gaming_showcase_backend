@@ -3,6 +3,7 @@ import { IUser } from './user.interface';
 export const USER_ROLE = {
   USER: 'USER',
   ADMIN: 'ADMIN',
+  SUPERADMIN: 'SUPERADMIN',
 } as const;
 
 export type updateUserProfileType = Partial<

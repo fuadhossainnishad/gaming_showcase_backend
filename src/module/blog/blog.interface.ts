@@ -1,8 +1,15 @@
+export interface Rewards {
+  code: string;
+  reward: string;
+  validity: string;
+}
 export interface BlogInterface {
   title: string;
   description: string;
   author: string;
   blogImage: string;
+  altTag: string
+  rewards: Rewards[]
   updatedAt: Date;
   isDeleted: boolean;
 }
@@ -13,5 +20,7 @@ export interface IBlogUpdate {
   description?: string;
   author?: string;
   blogImage?: string;
+  altTag: string
+  rewards?: Rewards[]
   updatedAt: Date;
 }

@@ -21,6 +21,7 @@ const AdminSchema = new Schema<IAdmin>(
     },
     role: {
       type: String,
+      enum: [USER_ROLE.SUPERADMIN, USER_ROLE.ADMIN],
       required: true,
       default: USER_ROLE.ADMIN,
     },

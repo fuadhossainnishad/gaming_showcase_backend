@@ -50,19 +50,10 @@ const findAllNewsletterEmailIntoDb = async (query: Record<string, unknown>) => {
 
     const emails = await allNewsletterMailQuery.modelQuery;
 
-    const total = await NewsLetter.countDocuments(query);
+    const meta = await allNewsletterMailQuery.countTotal();
 
-    const page = query.page ? Number(query.page) : 1;
-    const limit = query.limit ? Number(query.limit) : 10;
 
-    return {
-      meta: {
-        total,
-        page,
-        limit,
-      },
-      data: emails,
-    };
+    return { meta, emails };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,

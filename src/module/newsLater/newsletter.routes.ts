@@ -18,7 +18,7 @@ router.post(
 
 router.get(
   '/findNewsletterMail',
-  auth(USER_ROLE.ADMIN),
+  // auth(USER_ROLE.ADMIN),
   newsletterController.findAllNewsletterEmail,
 );
 

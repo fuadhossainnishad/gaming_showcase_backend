@@ -49,7 +49,7 @@ const auth = (...requireRoles: UserRole[]) => {
     console.log('Decoded Token:', decoded);
 
     let isUserExist = await User.findOne({ _id: await idConverter(id), email }).lean();
-    if (!isUserExist && role === USER_ROLE.ADMIN) {
+    if (!isUserExist && (role === USER_ROLE.ADMIN || role === USER_ROLE.SUPERADMIN)) {
       isUserExist = await Admin.findOne({ _id: await idConverter(id), email });
     }
 

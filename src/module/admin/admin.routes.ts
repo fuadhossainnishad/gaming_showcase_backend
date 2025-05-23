@@ -13,7 +13,14 @@ import UserController from '../user/user.controller';
 const router = express.Router();
 
 router.post(
+  '/signupSuperAdmin',
+  validationRequest(AdminValidationSchema.adminSignUpValidation),
+  AdminController.createSuperAdmin,
+);
+
+router.post(
   '/signup',
+  auth(USER_ROLE.SUPERADMIN),
   validationRequest(AdminValidationSchema.adminSignUpValidation),
   AdminController.createAdmin,
 );
@@ -77,7 +84,7 @@ router.delete(
 
 router.delete(
   '/delete-game',
-  // auth(USER_ROLE.ADMIN),
+  auth(USER_ROLE.SUPERADMIN),
   validationRequest(AdminValidationSchema.deleteGameValidationSchema),
   AdminController.deleteGameByAdmin,
 );

@@ -4,6 +4,7 @@ import httpStatus from 'http-status';
 import sendResponse from '../../utility/sendResponse';
 import { RequestHandler } from 'express';
 import BlogServices from './blog.services';
+import AppError from '../../app/error/AppError';
 
 const createNewBlog: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   console.log('GameController.createNewGame - Inputs:', {
@@ -63,7 +64,9 @@ const deleteBlog: RequestHandler = catchAsync(async (req, res) => {
     body: req.body.data,
     headers: req.headers,
   });
-
+  if (req.user.role !== 'SUPERADMIN') {
+    throw new AppError(httpStatus.FORBIDDEN, 'Only Super Admin can delet blog', '');
+  }
   const result = await BlogServices.deleteBlogIntoDb(req.body.data?.blogId!);
   sendResponse(res, {
     success: true,

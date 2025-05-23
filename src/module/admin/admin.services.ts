@@ -11,7 +11,7 @@ import User from '../user/user.model';
 import PendingGameUpdate from '../game/gameUpdate.model';
 import { GameInterface, IPendingGameUpdate } from '../game/game.interface';
 import { USER_ROLE } from '../user/user.constant';
-import { TAuth } from '../auth/auth.constant';
+import { TAdminLogin, TAuth } from '../auth/auth.constant';
 import { jwtHelpers } from '../../app/jwtHalpers/jwtHalpers';
 import config from '../../app/config';
 import Admin from './admin.model';
@@ -19,35 +19,84 @@ import { IAdmin } from './admin.interface';
 import Game from '../game/game.model';
 import { idConverter } from '../../utility/idCoverter';
 
-const createAdminIntoDb = async (payload: IAdmin) => {
+const createAdminIntoDb = async (payload: IAdmin, creatorId?: string) => {
   try {
-    console.log('admin: ', payload);
-    const { name, email, password } = payload;
-    const role = USER_ROLE.ADMIN;
+    const { name, email, password, role } = payload;
+
+    if (role !== USER_ROLE.SUPERADMIN && role !== USER_ROLE.ADMIN) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Role must be SUPERADMIN or ADMIN',
+        '',
+      );
+    }
+
     const isExist = await Admin.findOne({
       email,
-      role,
       isDeleted: { $ne: true },
     });
     if (isExist) {
-      throw new AppError(httpStatus.FORBIDDEN, 'Admin already exist', '');
+      throw new AppError(httpStatus.FORBIDDEN, 'Admin already exists', '');
     }
-    const createAdminBuilder = new Admin(payload);
-    console.log(createAdminBuilder);
+
+    const existingSuperAdmin = await Admin.findOne({
+      role: USER_ROLE.SUPERADMIN,
+      isDeleted: { $ne: true },
+    });
+
+    if (!existingSuperAdmin) {
+      if (role !== USER_ROLE.SUPERADMIN) {
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          'First admin must be a SUPERADMIN',
+          '',
+        );
+      }
+    } else {
+      if (!creatorId) {
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          'Creator ID required when Super Admin exists',
+          '',
+        );
+      }
+      const creator = await Admin.findById(creatorId);
+      if (!creator || creator.role !== USER_ROLE.SUPERADMIN) {
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          'Only Super Admin can create admins',
+          '',
+        );
+      }
+
+      if (role === USER_ROLE.SUPERADMIN) {
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          'Only one Super Admin can exist',
+          '',
+        );
+      }
+    }
+
+    const createAdminBuilder = new Admin({ name, email, password, role });
     const result = await createAdminBuilder.save();
-    return result && { status: true, message: 'successfully create new admin' };
+    return {
+      status: true,
+      message: 'Successfully created new admin',
+      adminId: result.id.toString(),
+    };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
-      ' createUserIntoDb server unavailable',
-      error.message,
+      error.message || 'Failed to create admin',
+      '',
     );
   }
 };
 
-const loginAdminIntoDb = async (payload: TAuth) => {
+const loginAdminIntoDb = async (payload: TAdminLogin) => {
   const isAdminExist = await Admin.findOne(
-    { sub: payload.sub, email: payload.email },
+    { email: payload.email },
     { password: 1, _id: 1, email: 1, role: 1 },
   );
 
@@ -468,7 +517,10 @@ const deleteUser = async (userId: string) => {
 };
 
 const deleteGame = async (gameId: string) => {
+  console.log('gameid: ', typeof gameId);
   const gameIdObject = await idConverter(gameId);
+  console.log('gameid: ', typeof gameIdObject);
+
 
   console.log('gameIdObject: ', gameIdObject);
 
