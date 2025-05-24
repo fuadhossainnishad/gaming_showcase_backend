@@ -49,6 +49,7 @@ export interface GameInterface {
   platform?: string[];
   price: number;
   socialLinks: SocialLinksInterface[];
+  linkType?: 'steam' | 'itch.io' | 'globe',
   gameStatus: 'active' | 'upcoming';
   upcomingDate?: Date;
   upvote?: UpvoteInterface[];
@@ -73,6 +74,7 @@ export interface IPendingGameUpdate {
   platform?: string[];
   price?: number;
   socialLinks?: SocialLinksInterface[];
+  linkType?: 'steam' | 'itch.io' | 'globe',
   gameStatus?: 'active' | 'upcoming';
   upcomingDate?: Date;
   status: 'pending' | 'approved' | 'rejected';

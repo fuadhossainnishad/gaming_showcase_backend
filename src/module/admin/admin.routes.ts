@@ -9,6 +9,7 @@ import AuthValidationSchema from '../auth/auth.validation';
 import AuthController from '../auth/auth.controller';
 import { userValidation } from '../user/user.zod.validation';
 import UserController from '../user/user.controller';
+import GameValidationSchema from '../game/game.zod.validation';
 
 const router = express.Router();
 
@@ -75,6 +76,19 @@ router.post(
   AdminController.approveProfileUpdateByAdmin,
 );
 
+router.patch(
+  '/update_linkType',
+  validationRequest(GameValidationSchema.UpdateLinkTypeValidation),
+  GameController.updateLinkType,
+);
+
+router.patch(
+  '/update_user_to_admin',
+  auth(USER_ROLE.SUPERADMIN),
+  validationRequest(AdminValidationSchema.updateUserToAdminValidation),
+  AdminController.updateUserToAdmin,
+);
+
 router.delete(
   '/reject-profile-update',
   // auth(USER_ROLE.ADMIN),
@@ -84,7 +98,7 @@ router.delete(
 
 router.delete(
   '/delete-game',
-  auth(USER_ROLE.SUPERADMIN),
+  auth(USER_ROLE.ADMIN, USER_ROLE.USER),
   validationRequest(AdminValidationSchema.deleteGameValidationSchema),
   AdminController.deleteGameByAdmin,
 );

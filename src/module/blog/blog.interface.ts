@@ -10,6 +10,8 @@ export interface BlogInterface {
   blogImage: string;
   altTag: string
   rewards: Rewards[]
+  draft: boolean
+  published: boolean
   updatedAt: Date;
   isDeleted: boolean;
 }
@@ -22,5 +24,7 @@ export interface IBlogUpdate {
   blogImage?: string;
   altTag: string
   rewards?: Rewards[]
+  draft: boolean
+  published: boolean
   updatedAt: Date;
 }

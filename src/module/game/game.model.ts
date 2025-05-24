@@ -7,6 +7,7 @@ import {
   UpvoteInterface,
 } from './game.interface';
 import { linksRegex } from '../../constants/regex.constants';
+import { string } from 'zod';
 
 const GameSchema = new Schema<GameInterface, CreateGameModel>(
   {
@@ -72,6 +73,12 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
           message: 'Each link must be a valid URL',
         },
       ],
+    },
+    linkType: {
+      type: String,
+      enum: ['steam', 'itch.io', 'globe'],
+      required: false,
+      default: ''
     },
     gameStatus: {
       type: String,

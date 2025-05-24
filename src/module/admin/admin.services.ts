@@ -18,6 +18,7 @@ import Admin from './admin.model';
 import { IAdmin } from './admin.interface';
 import Game from '../game/game.model';
 import { idConverter } from '../../utility/idCoverter';
+import mongoose from 'mongoose';
 
 const createAdminIntoDb = async (payload: IAdmin, creatorId?: string) => {
   try {
@@ -641,6 +642,47 @@ const getDashboardStats = async () => {
   };
 };
 
+const updateUserToAdminIntoDb = async (
+  payload: { userId: string, password: string },
+) => {
+  const role = USER_ROLE.ADMIN;
+  const userIdObject = await idConverter(payload.userId)
+  console.log('userId: ', payload.userId);
+
+  if (!userIdObject) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Provided user ID does not match authenticated user',
+      '',
+    );
+  }
+
+  const existingUser = await User.findOne({
+    _id: userIdObject,
+    isDeleted: { $ne: true },
+  });
+  // { $set: updateFields },
+  // { new: true, runValidators: true, session },
+  // ).select('-password');
+
+  if (!existingUser) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'User not found or is deleted',
+      '',
+    );
+  }
+
+  const createAdminBuilder = new Admin({ name: existingUser.name, email: existingUser.email, password: payload.password, role });
+  const result = await createAdminBuilder.save();
+  return {
+    status: true,
+    message: 'Successfully created new admin',
+    admin: result,
+  };
+
+};
+
 const AdminServices = {
   createAdminIntoDb,
   loginAdminIntoDb,
@@ -654,6 +696,7 @@ const AdminServices = {
   deleteUser,
   deleteGame,
   getDashboardStats,
+  updateUserToAdminIntoDb,
 };
 
 export default AdminServices;

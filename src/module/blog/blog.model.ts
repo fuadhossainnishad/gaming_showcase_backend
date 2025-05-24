@@ -35,6 +35,14 @@ const BlogSchema = new Schema<BlogInterface>(
       required: true,
       default: []
     },
+    draft: {
+      type: Boolean,
+      required: true,
+    },
+    published: {
+      type: Boolean,
+      required: true,
+    },
     updatedAt: {
       type: Date,
       default: new Date(),

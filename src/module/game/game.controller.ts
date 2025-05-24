@@ -242,6 +242,23 @@ const updateGame: RequestHandlerWithFiles = catchAsync(async (req, res) => {
   });
 });
 
+const updateLinkType: RequestHandlerWithFiles = catchAsync(async (req, res) => {
+  console.log('GameController.createNewGame - Inputs:', {
+    body: req.body,
+    files: req.files,
+    user: req.user,
+    headers: req.headers,
+  });
+  const result = await GameServices.updateLinkTypeIntoDb(
+    req.body.data,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Linktype updated successfully',
+    data: result,
+  });
+});
 const searchGame: RequestHandler = catchAsync(async (req, res) => {
   if (!req.query) {
     throw new AppError(
@@ -276,6 +293,7 @@ const GameController = {
   getTopGameOfDay,
   getTopGameOfWeek,
   updateGame,
+  updateLinkType,
   searchGame,
 };
 

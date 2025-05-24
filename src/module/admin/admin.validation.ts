@@ -99,6 +99,16 @@ const deleteGameValidationSchema = z.object({
   }),
 });
 
+const updateUserToAdminValidation = z.object({
+  body: z.object({
+    data: z.object({
+      userId: z.string({ required_error: 'User ID is required' }),
+    }),
+  }),
+  // .strict({ message: 'Only updateId is allowed' }),
+});
+
+
 const AdminValidationSchema = {
   adminSignUpValidation,
   adminSignInValidation,
@@ -109,6 +119,7 @@ const AdminValidationSchema = {
   rejectProfileUpdateValidation,
   deleteUserValidationSchema,
   deleteGameValidationSchema,
+  updateUserToAdminValidation,
 };
 
 export default AdminValidationSchema;

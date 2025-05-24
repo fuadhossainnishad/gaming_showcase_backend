@@ -11,6 +11,7 @@ import {
   SharePayload,
   TGameUpdate,
   TopGameQuery,
+  updateLinkPayload,
 } from './game.type';
 import { startOfDay, startOfWeek, endOfDay, endOfWeek } from 'date-fns';
 import PendingGameUpdate from './gameUpdate.model';
@@ -43,44 +44,15 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Categories are required', '');
   }
 
-  // const payload = req.body;
-
-  // if (!payload) {
-  //   throw new AppError(httpStatus.BAD_REQUEST, 'Request body is missing', '');
-  // }
-  // if (!payload.game_title) {
-  //   throw new AppError(httpStatus.BAD_REQUEST, 'Game title is required', '');
-  // }
-  // if (!payload.category) {
-  //   throw new AppError(httpStatus.BAD_REQUEST, 'Category is required', '');
-  // }
-
-  // const files = Array.isArray(req.files)
-  //   ? req.files
-  //   : req.files && 'media_files' in req.files
-  //     ? req.files['media_files']
-  //     : undefined;
-
-  // const mediaFiles =
-  //   files?.map((file) => MediaUrl.gameMediaUrl(file.path, userId)) || [];
-
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
   const imageFiles = files['image'] || [];
   const thumbnailFile = files['thumbnail'] ? files['thumbnail'][0] : null;
-
-  // const mediaFiles = imageFiles.map((file) =>
-  //   MediaUrl.gameMediaUrl(file.path, userId, 'image'),
-  // );
 
   const mediaFiles = await Promise.all(imageFiles.map(async (file) => {
     const remotePath = `${Date.now()}-${file.originalname}`
     return await uploadFileToBunny(file.path, remotePath)
   }
   ));
-
-  // const thumbnail = thumbnailFile
-  //   ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId, 'thumbnails')
-  //   : image?.thumbnail || '';
 
   let thumbnail
   if (thumbnailFile) {
@@ -97,7 +69,6 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   }
 
   const gameData: GameInterface = {
-    // id: new mongoose.Types.ObjectId(),
     userId: userIdObject,
     userName: data.userName || 'Unknown',
     title: data.title,
@@ -761,7 +732,6 @@ export const getTopGameOfWeek = async (query: TopGameQuery) => {
         },
       },
       { $sort: { popularityScore: -1 } },
-      { $limit: query.limit! },
       {
         $lookup: {
           from: 'users',
@@ -886,6 +856,41 @@ const updateGameIntoDb = async (
   return pendingUpdate;
 };
 
+const updateLinkTypeIntoDb = async (
+  payload: updateLinkPayload
+) => {
+  const dataGameId = await idConverter(payload.gameId);
+
+  if (!dataGameId) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid game ID', '');
+  }
+
+  const game = await Game.findById(dataGameId).where({
+    isDelete: { $ne: true },
+  });
+  if (!game) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Game not found or is deleted',
+      '',
+    );
+  }
+  const updatedGame = await Game.findByIdAndUpdate(
+    dataGameId,
+    { $set: { linkType: payload.linkType } },
+    { new: true, runValidators: true },
+  );
+  if (!updatedGame) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to update link type',
+      '',
+    );
+  }
+
+  return updatedGame;
+};
+
 const searchGameIntoDb = async (query: Record<string, unknown>) => {
   console.log('query: ', query);
   if (!query) {
@@ -919,6 +924,7 @@ const GameServices = {
   getTopGameOfDay,
   getTopGameOfWeek,
   updateGameIntoDb,
+  updateLinkTypeIntoDb,
   searchGameIntoDb,
 };
 

@@ -20,6 +20,11 @@ export type TopGameQuery = {
   limit?: number;
 };
 
+export type updateLinkPayload = {
+  linkType: string,
+  gameId: string,
+}
+
 export type TGameUpdate = {
   data: {
     gameId: string;

@@ -190,6 +190,18 @@ const RejectGameUpdateValidation = z.object({
     .strict('Only updateId is allowed'),
 });
 
+const UpdateLinkTypeValidation = z.object({
+  body: z
+    .object({
+      data: z.object({
+        gameId: z.string({ required_error: 'Game ID is required' }),
+        linkType: z.enum(['steam', 'itch.io', 'globe'], {
+          required_error: 'Link type must be steam, itch.io, or globe',
+        })
+      }),
+    })
+});
+
 const GameValidationSchema = {
   GameSchema,
   CommentSchema,
@@ -198,6 +210,7 @@ const GameValidationSchema = {
   ShareSchema,
   TopGameQuerySchema,
   GameUpdateSchemaValidation,
+  UpdateLinkTypeValidation,
   ApproveGameUpdateValidation,
   RejectGameUpdateValidation,
 };

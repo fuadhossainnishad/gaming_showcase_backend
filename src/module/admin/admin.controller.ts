@@ -184,6 +184,22 @@ const getDashboardStats: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const updateUserToAdmin: RequestHandler = catchAsync(async (req, res) => {
+  if ((req.user?.role === 'ADMIN') || (req.user?.role === 'USER')) {
+    throw new AppError(httpStatus.FORBIDDEN, 'Only Super Admin can convert user into admin', '');
+  }
+
+  const result = await AdminServices.updateUserToAdminIntoDb(
+    req.body.data,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'successfully convert user into admin',
+    data: result,
+  });
+});
+
 const AdminController = {
   createSuperAdmin,
   createAdmin,
@@ -198,6 +214,7 @@ const AdminController = {
   deleteUserByAdmin,
   deleteGameByAdmin,
   getDashboardStats,
+  updateUserToAdmin,
 };
 
 export default AdminController;

@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import { idConverter } from '../../utility/idCoverter';
 import { uploadFileToBunny } from '../../utility/bunny_cdn';
 import fs from 'fs';
+import { boolean } from 'zod';
 
 const createNewBlogIntoDb = async (req: RequestWithFiles) => {
   console.log('createNewGameIntoDb - Request Details:', {
@@ -29,6 +30,10 @@ const createNewBlogIntoDb = async (req: RequestWithFiles) => {
 
   if (!data.author) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Author is required', '');
+  }
+
+  if (data.draft === data.published) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Draft and published can not be same', '');
   }
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
   const blogImageFiles = files?.blogImage || [];
@@ -56,6 +61,8 @@ const createNewBlogIntoDb = async (req: RequestWithFiles) => {
     blogImage,
     altTag: data.altTag || '',
     rewards: data.rewards || [],
+    draft: data.draft,
+    published: data.published,
     updatedAt: new Date(),
     isDeleted: false,
   };
@@ -105,6 +112,9 @@ const updateBlogIntoDb = async (
     if (!payload.blogId) {
       throw new AppError(httpStatus.FORBIDDEN, 'Blog does not exist', '');
     }
+    if (payload.draft === payload.published) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Draft and published can not be same', '');
+    }
     const blogIdObject = await idConverter(payload.blogId);
 
     const existingBlog = await Blog.findOne({
@@ -137,6 +147,9 @@ const updateBlogIntoDb = async (
     if (payload.author) updateFields.author = payload.author;
     if (payload.altTag) updateFields.altTag = payload.altTag;
     if (payload.rewards && payload.rewards.length > 0) updateFields.rewards = payload.rewards;
+    if (typeof payload.draft === 'boolean') updateFields.draft = payload.draft;
+    if (typeof payload.published === 'boolean') updateFields.published = payload.published;
+
     // if (file) {
     //   updateFields.blogImage = MediaUrl.blogMediaUrl(file.path);
     // }
