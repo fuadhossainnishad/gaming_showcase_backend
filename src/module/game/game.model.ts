@@ -76,9 +76,9 @@ const GameSchema = new Schema<GameInterface, CreateGameModel>(
     },
     linkType: {
       type: String,
-      enum: ['steam', 'itch.io', 'globe'],
+      enum: ['steam', 'itch.io', 'globe',''],
       required: false,
-      default: ''
+      default: '',
     },
     gameStatus: {
       type: String,

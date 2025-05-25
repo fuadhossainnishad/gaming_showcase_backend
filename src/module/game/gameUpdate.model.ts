@@ -58,6 +58,12 @@ const pendingGameUpdateSchema = new Schema<IPendingGameUpdate>(
       ],
       required: false,
     },
+    linkType: {
+      type: String,
+      enum: ['steam', 'itch.io', 'globe', ''],
+      required: false,
+      default: '',
+    },
     gameStatus: {
       type: String,
       enum: ['active', 'upcoming'],

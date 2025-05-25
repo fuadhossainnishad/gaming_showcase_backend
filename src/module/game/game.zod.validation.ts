@@ -30,6 +30,12 @@ const GameDataSchema = z.object({
   platform: z.array(z.string().min(1, 'Platform cannot be empty')).optional(),
   price: z.number().min(0, 'Price must be non-negative'),
   socialLinks: z.array(SocialLinksSchema).optional(),
+  linkType: z
+    .enum(['steam', 'itch.io', 'globe',''], {
+      required_error: 'Link type must be steam, itch.io, or globe',
+    })
+    .optional(),
+
 });
 
 const ImageSchema = z.object({
