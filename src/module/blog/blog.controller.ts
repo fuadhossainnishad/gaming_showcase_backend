@@ -65,7 +65,11 @@ const deleteBlog: RequestHandler = catchAsync(async (req, res) => {
     headers: req.headers,
   });
   if (req.user.role !== 'SUPERADMIN') {
-    throw new AppError(httpStatus.FORBIDDEN, 'Only Super Admin can delet blog', '');
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Only Super Admin can delet blog',
+      '',
+    );
   }
   const result = await BlogServices.deleteBlogIntoDb(req.body.data?.blogId!);
   sendResponse(res, {

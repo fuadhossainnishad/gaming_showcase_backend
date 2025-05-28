@@ -1,25 +1,16 @@
 import httpStatus from 'http-status';
-
 import User from './user.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
-import {
-  IPendingUserUpdate,
-  IUser,
-  IUserUpdate,
-  TSignup,
-} from './user.interface';
+import { IPendingUserUpdate, IUserUpdate, TSignup } from './user.interface';
 import mongoose from 'mongoose';
-import { updateUserProfileType, USER_ROLE } from './user.constant';
-import config from '../../app/config';
+import { USER_ROLE } from './user.constant';
 import AppError from '../../app/error/AppError';
 import PendingUserUpdate from './userUpdateProfile';
 import MediaUrl from '../../utility/game.media';
 import { idConverter } from '../../utility/idCoverter';
 import { SocialLinksInterface } from '../game/game.interface';
-import AuthServices from '../auth/auth.services';
-import AuthController from '../auth/auth.controller';
 import { uploadFileToBunny } from '../../utility/bunny_cdn';
-import fs from 'fs';
+import fs from 'fs/promises';
 import Game from '../game/game.model';
 
 const createUserIntoDb = async (payload: TSignup) => {
@@ -249,7 +240,7 @@ const updateUserProfileIntoDb = async (
     if (file) {
       const remotePath = `${Date.now()}-${file.originalname}`;
       photoPath = await uploadFileToBunny(file.path, remotePath);
-      fs.unlinkSync(file.path);
+      await fs.unlink(file.path);
     } else {
       photoPath = existingUser.photo;
     }

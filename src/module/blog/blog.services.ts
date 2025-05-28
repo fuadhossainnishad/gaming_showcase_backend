@@ -1,15 +1,12 @@
 import httpStatus from 'http-status';
 import AppError from '../../app/error/AppError';
 import { RequestWithFiles } from '../../types/express';
-import MediaUrl from '../../utility/game.media';
 import { BlogInterface, IBlogUpdate } from './blog.interface';
 import Blog from './blog.model';
 import QueryBuilder from '../../app/builder/QueryBuilder';
-import mongoose from 'mongoose';
 import { idConverter } from '../../utility/idCoverter';
 import { uploadFileToBunny } from '../../utility/bunny_cdn';
-import fs from 'fs';
-import { boolean } from 'zod';
+import fs from 'fs/promises';
 
 const createNewBlogIntoDb = async (req: RequestWithFiles) => {
   console.log('createNewGameIntoDb - Request Details:', {
@@ -33,23 +30,22 @@ const createNewBlogIntoDb = async (req: RequestWithFiles) => {
   }
 
   if (data.draft === data.published) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Draft and published can not be same', '');
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Draft and published can not be same',
+      '',
+    );
   }
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
   const blogImageFiles = files?.blogImage || [];
 
-  // const blogImage =
-  //   blogImageFiles.length > 0
-  //     ? MediaUrl.blogMediaUrl(blogImageFiles[0].path)
-  //     : '';
-
   let blogImage;
   if (blogImageFiles.length > 0) {
     const remotePath = `${Date.now()}-${blogImageFiles[0].originalname}`;
-
+    const start = Date.now();
     blogImage = await uploadFileToBunny(blogImageFiles[0].path, remotePath);
-
-    fs.unlinkSync(blogImageFiles[0].path);
+    console.log('Upload took', Date.now() - start, 'ms');
+    await fs.unlink(blogImageFiles[0].path);
   } else {
     blogImage = '';
   }
@@ -73,7 +69,7 @@ const createNewBlogIntoDb = async (req: RequestWithFiles) => {
 
 const getAllBlogIntoDb = async (query: Record<string, unknown>) => {
   try {
-    const baseQuery = Blog.find();
+    const baseQuery = Blog.find().lean();
 
     const blogQuery = new QueryBuilder(baseQuery, query)
       .search(['title', 'description'])
@@ -99,8 +95,8 @@ const updateBlogIntoDb = async (
   payload: IBlogUpdate,
   file?: Express.Multer.File,
 ) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
 
   try {
     console.log('file:', file?.path);
@@ -113,7 +109,11 @@ const updateBlogIntoDb = async (
       throw new AppError(httpStatus.FORBIDDEN, 'Blog does not exist', '');
     }
     if (payload.draft === payload.published) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'Draft and published can not be same', '');
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Draft and published can not be same',
+        '',
+      );
     }
     const blogIdObject = await idConverter(payload.blogId);
 
@@ -146,42 +146,44 @@ const updateBlogIntoDb = async (
     if (payload.description) updateFields.description = payload.description;
     if (payload.author) updateFields.author = payload.author;
     if (payload.altTag) updateFields.altTag = payload.altTag;
-    if (payload.rewards && payload.rewards.length > 0) updateFields.rewards = payload.rewards;
+    if (payload.rewards && payload.rewards.length > 0)
+      updateFields.rewards = payload.rewards;
     if (typeof payload.draft === 'boolean') updateFields.draft = payload.draft;
-    if (typeof payload.published === 'boolean') updateFields.published = payload.published;
+    if (typeof payload.published === 'boolean')
+      updateFields.published = payload.published;
 
     // if (file) {
     //   updateFields.blogImage = MediaUrl.blogMediaUrl(file.path);
     // }
 
     if (file) {
-      const remotePath = `${Date.now()}-${file.originalname}`
+      const remotePath = `${Date.now()}-${file.originalname}`;
       updateFields.blogImage = await uploadFileToBunny(file.path, remotePath);
-      fs.unlinkSync(file.path)
+      fs.unlink(file.path);
     }
-
 
     updateFields.updatedAt = new Date();
 
     const updatedBlog = await Blog.findByIdAndUpdate(
       blogIdObject,
       { $set: updateFields },
-      { new: true, runValidators: true, session },
+      { new: true, runValidators: true },
     );
 
-    await session.commitTransaction();
+    // await session.commitTransaction();
 
     return updatedBlog;
   } catch (error: any) {
-    await session.abortTransaction();
+    // await session.abortTransaction();
     throw new AppError(
       error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to update user profile',
       '',
     );
-  } finally {
-    session.endSession();
   }
+  //  finally {
+  //   session.endSession();
+  // }
 };
 
 const deleteBlogIntoDb = async (blogId: string) => {
@@ -189,7 +191,7 @@ const deleteBlogIntoDb = async (blogId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'BlogId is required', '');
   }
   const blogIdObject = await idConverter(blogId);
-  const isExist = Blog.findById(blogIdObject);
+  const isExist = await Blog.findById(blogIdObject);
   if (!isExist) {
     throw new AppError(httpStatus.NOT_FOUND, 'Blog not exist in database', '');
   }

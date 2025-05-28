@@ -21,7 +21,7 @@ import MediaUrl from '../../utility/game.media';
 import { idConverter } from '../../utility/idCoverter';
 import Game from './game.model';
 import { uploadFileToBunny } from '../../utility/bunny_cdn';
-import fs from 'fs';
+import fs from 'fs/promises';
 
 const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   console.log('createNewGameIntoDb - Request Details:', {
@@ -48,17 +48,18 @@ const createNewGameIntoDb = async (req: RequestWithFiles, userId: string) => {
   const imageFiles = files['image'] || [];
   const thumbnailFile = files['thumbnail'] ? files['thumbnail'][0] : null;
 
-  const mediaFiles = await Promise.all(imageFiles.map(async (file) => {
-    const remotePath = `${Date.now()}-${file.originalname}`
-    return await uploadFileToBunny(file.path, remotePath)
-  }
-  ));
+  const mediaFiles = await Promise.all(
+    imageFiles.map(async (file) => {
+      const remotePath = `${Date.now()}-${file.originalname}`;
+      return await uploadFileToBunny(file.path, remotePath);
+    }),
+  );
 
-  let thumbnail
+  let thumbnail;
   if (thumbnailFile) {
-    const remotePath = `${Date.now()}-${thumbnailFile.originalname}`
-    thumbnail = await uploadFileToBunny(thumbnailFile.path, remotePath)
-    fs.unlinkSync(thumbnailFile.path)
+    const remotePath = `${Date.now()}-${thumbnailFile.originalname}`;
+    thumbnail = await uploadFileToBunny(thumbnailFile.path, remotePath);
+    await fs.unlink(thumbnailFile.path);
   }
 
   const user = await User.findById(userIdObject).where({
@@ -442,21 +443,14 @@ const userCommentUpvote = async (
     );
   }
 };
-const userGameUpvote = async (
-  payload: GameUpvotePayload,
-  userId: string,
-) => {
+const userGameUpvote = async (payload: GameUpvotePayload, userId: string) => {
   try {
     if (!payload.gameId) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'Game ID are required',
-        '',
-      );
+      throw new AppError(httpStatus.BAD_REQUEST, 'Game ID are required', '');
     }
 
-    const userIdObject = await idConverter(userId)
-    const gameIdObject = await idConverter(payload.gameId)
+    const userIdObject = await idConverter(userId);
+    const gameIdObject = await idConverter(payload.gameId);
 
     const user = await User.findById(userIdObject).where({
       isDeleted: { $ne: true },
@@ -494,12 +488,12 @@ const userGameUpvote = async (
       },
       {
         $push: {
-          'upvote': {
+          upvote: {
             userId: userIdObject,
             createdAt: new Date(),
           },
         },
-        $inc: { 'totalUpvote': 1 },
+        $inc: { totalUpvote: 1 },
       },
       { new: true, runValidators: true },
     ).populate('userId');
@@ -817,21 +811,22 @@ const updateGameIntoDb = async (
   //   MediaUrl.gameMediaUrl(file.path, userId, 'image'),
   // );
 
-  const mediaFiles = await Promise.all(imageFiles.map(async (file) => {
-    const remotePath = `${Date.now()}-${file.originalname}`
-    return await uploadFileToBunny(file.path, remotePath)
-  }
-  ));
+  const mediaFiles = await Promise.all(
+    imageFiles.map(async (file) => {
+      const remotePath = `${Date.now()}-${file.originalname}`;
+      return await uploadFileToBunny(file.path, remotePath);
+    }),
+  );
 
   // const thumbnail = thumbnailFile
   //   ? MediaUrl.gameMediaUrl(thumbnailFile.path, userId, 'thumbnails')
   //   : image?.thumbnail || '';
 
-  let thumbnail
+  let thumbnail;
   if (thumbnailFile) {
-    const remotePath = `${Date.now()}-${thumbnailFile.originalname}`
-    thumbnail = await uploadFileToBunny(thumbnailFile.path, remotePath)
-    fs.unlinkSync(thumbnailFile.path)
+    const remotePath = `${Date.now()}-${thumbnailFile.originalname}`;
+    thumbnail = await uploadFileToBunny(thumbnailFile.path, remotePath);
+    await fs.unlink(thumbnailFile.path);
   }
 
   const pendingUpdateData: Partial<IPendingGameUpdate> = {
@@ -856,9 +851,7 @@ const updateGameIntoDb = async (
   return pendingUpdate;
 };
 
-const updateLinkTypeIntoDb = async (
-  payload: updateLinkPayload
-) => {
+const updateLinkTypeIntoDb = async (payload: updateLinkPayload) => {
   const dataGameId = await idConverter(payload.gameId);
 
   if (!dataGameId) {

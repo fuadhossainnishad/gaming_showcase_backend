@@ -18,7 +18,6 @@ import Admin from './admin.model';
 import { IAdmin } from './admin.interface';
 import Game from '../game/game.model';
 import { idConverter } from '../../utility/idCoverter';
-import mongoose from 'mongoose';
 
 const createAdminIntoDb = async (payload: IAdmin, creatorId?: string) => {
   try {
